@@ -54,7 +54,7 @@
             <f:content>
                 <Label text="{i18n>country}" required="true"/>
                 <Select id="country" selectedKey="{reg>/basic/primaryAddress/country}"
-                        items="{reg>/ui/countries}" change=".onBasicFieldChange">
+                        items="{reg>/ui/countries}" change=".onCountryChange">
                     <core:ListItem key="{reg>country}" text="{reg>description}"/>
                 </Select>
 
@@ -85,7 +85,7 @@
         <Panel
             headerText="{i18n>secondaryAddresses}"
             expandable="true"
-            expanded="false"
+            expanded="{= ${reg>/basic/secondaryAddresses}.length > 0 }"
             class="sapUiResponsiveMargin">
 
             <headerToolbar>

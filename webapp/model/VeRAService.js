@@ -23,11 +23,34 @@ sap.ui.define([
         // ── Reference data (htmlhelper) ─────────────────────────────────
 
         getCountries: function () {
-            return this._get("htmlhelper", { type: "getCountry" });
+            // Load from hardcoded countries JSON file
+            return jQuery.ajax({
+                url: sap.ui.require.toUrl("vsnt/vera/model/countries.json"),
+                dataType: "json"
+            });
         },
 
-        getRegions: function () {
-            return this._get("htmlhelper", { type: "getRegion" });
+        getRegions: function (sCountry) {
+            // Load from local JSON file and optionally filter by country
+            return jQuery.ajax({
+                url: sap.ui.require.toUrl("vsnt/vera/model/countryRegionData.json"),
+                dataType: "json"
+            }).then(function (aData) {
+                if (sCountry) {
+                    return aData.filter(function (oItem) {
+                        return oItem.country === sCountry;
+                    });
+                }
+                return aData;
+            });
+        },
+
+        getAllRegionData: function () {
+            // Get all region data for client-side filtering
+            return jQuery.ajax({
+                url: sap.ui.require.toUrl("vsnt/vera/model/countryRegionData.json"),
+                dataType: "json"
+            });
         },
 
         getPaymentTerms: function (sVendorType) {

@@ -12,14 +12,39 @@ sap.ui.define([
                 .done(function (aCountries) {
                     that._reg().setProperty("/ui/countries", aCountries || []);
                 });
-            this.getOwnerComponent().getService().getRegions()
-                .done(function (aRegions) {
-                    that._reg().setProperty("/ui/regions", aRegions || []);
+            
+            // Load all region data for filtering
+            this.getOwnerComponent().getService().getAllRegionData()
+                .done(function (aAllRegions) {
+                    that._reg().setProperty("/ui/allRegions", aAllRegions || []);
+                    // Initialize regions based on current country selection
+                    that._filterRegionsByCountry();
                 });
         },
 
         _svc: function () { return this.getOwnerComponent().getService(); },
         _reg: function () { return this.getOwnerComponent().getModel("reg"); },
+
+        onCountryChange: function (oEvent) {
+            // Clear the state selection when country changes
+            this._reg().setProperty("/basic/primaryAddress/state", "");
+            this._filterRegionsByCountry();
+            this._validateStep();
+        },
+
+        _filterRegionsByCountry: function () {
+            var sCountry = this._reg().getProperty("/basic/primaryAddress/country");
+            var aAllRegions = this._reg().getProperty("/ui/allRegions") || [];
+            
+            if (sCountry) {
+                var aFilteredRegions = aAllRegions.filter(function (oRegion) {
+                    return oRegion.country === sCountry;
+                });
+                this._reg().setProperty("/ui/regions", aFilteredRegions);
+            } else {
+                this._reg().setProperty("/ui/regions", []);
+            }
+        },
 
         onBasicFieldChange: function () { this._validateStep(); },
 
