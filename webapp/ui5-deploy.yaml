@@ -1,0 +1,35 @@
+specVersion: "3.0"
+metadata:
+  name: vsnt.vera
+type: application
+
+# ═══════════════════════════════════════════════════════════════════════════
+# BAS Deployment Configuration
+#
+# Read by the BAS "Deploy to Cloud Foundry" wizard. Tells BAS which CF
+# space and HTML5 Application Repository instance to push the built app to.
+#
+# Right-click webapp/ in BAS → Deploy → Deploy to Cloud Foundry.
+#
+# Prerequisites (one-time, BTP Cockpit → Service Instances):
+#   ✓ HTML5 Application Repository (plan: app-host)    → "vera-html5-host"
+#   ✓ HTML5 Application Repository (plan: app-runtime) → "vera-html5-runtime"
+#   ✓ Destination                  (plan: lite)         → "vera-destination"
+#   ✓ Connectivity                 (plan: lite)         → "vera-connectivity"
+#
+# Then configure the destination "VERA_PORTAL" — see btp/BTP_SETUP.md.
+# ═══════════════════════════════════════════════════════════════════════════
+
+builder:
+  resources:
+    excludes:
+      - "/test/**"
+      - "/localService/**"
+      - "/index-mock.html"
+
+deploy:
+  destination: VERA_PORTAL_DEPLOY
+  app:
+    name: vsnt.vera
+    description: "VeRA Vendor Registration Application"
+  cloudService: vera-html5-host

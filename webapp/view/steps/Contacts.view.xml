@@ -1,0 +1,85 @@
+<mvc:View
+    controllerName="vsnt.vera.controller.steps.Contacts"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:core="sap.ui.core">
+
+    <VBox class="sapUiMediumMargin">
+
+        <Panel headerText="{i18n>tabContacts}">
+
+            <headerToolbar>
+                <OverflowToolbar>
+                    <Title text="{i18n>tabContacts}" level="H3"/>
+                    <ToolbarSpacer/>
+                    <Button icon="sap-icon://add" text="{i18n>btnAddContact}"
+                            press=".onAddContact" type="Transparent"/>
+                </OverflowToolbar>
+            </headerToolbar>
+
+            <MessageStrip
+                text="{i18n>contactsHint}"
+                type="Information"
+                showIcon="true"
+                visible="{= ${reg>/contacts/items}.length === 0}"
+                class="sapUiSmallMargin"/>
+
+            <List
+                id="contactsList"
+                items="{reg>/contacts/items}"
+                noDataText="{i18n>noContacts}"
+                showSeparators="Inner">
+                <CustomListItem>
+                    <f:SimpleForm
+                        editable="true"
+                        layout="ResponsiveGridLayout"
+                        labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
+                        columnsXL="2" columnsL="2" columnsM="1">
+
+                        <f:toolbar>
+                            <Toolbar>
+                                <Title text="{reg>name}" level="H4"/>
+                                <ToolbarSpacer/>
+                                <Button icon="sap-icon://delete" type="Transparent"
+                                        press=".onRemoveContact" tooltip="{i18n>btnRemove}"/>
+                            </Toolbar>
+                        </f:toolbar>
+
+                        <f:content>
+                            <Label text="{i18n>name}" required="true"/>
+                            <Input value="{reg>name}" liveChange=".onContactFieldChange"/>
+                            <Label text="{i18n>emailAddress}" required="true"/>
+                            <Input value="{reg>email}" type="Email" liveChange=".onContactFieldChange"/>
+                            <Label text="{i18n>phoneNumber}"/>
+                            <Input value="{reg>phone}" type="Tel"/>
+                            <Label text="{i18n>faxNumber}"/>
+                            <Input value="{reg>fax}" type="Tel"/>
+                            <Label text="{i18n>department}"/>
+                            <Select selectedKey="{reg>department}">
+                                <items>
+                                    <core:Item key=""        text="{i18n>selectOne}"/>
+                                    <core:Item key="ACCT"    text="Accounting"/>
+                                    <core:Item key="ADMIN"   text="Administration"/>
+                                    <core:Item key="BILLING" text="Billing"/>
+                                    <core:Item key="EXEC"    text="Executive"/>
+                                    <core:Item key="FIN"     text="Finance"/>
+                                    <core:Item key="HR"      text="Human Resources"/>
+                                    <core:Item key="IT"      text="Information Technology"/>
+                                    <core:Item key="LEGAL"   text="Legal"/>
+                                    <core:Item key="MGMT"    text="Management"/>
+                                    <core:Item key="OPS"     text="Operations"/>
+                                    <core:Item key="SALES"   text="Sales"/>
+                                    <core:Item key="OTHER"   text="Other"/>
+                                </items>
+                            </Select>
+                        </f:content>
+                    </f:SimpleForm>
+                </CustomListItem>
+            </List>
+
+        </Panel>
+
+    </VBox>
+
+</mvc:View>

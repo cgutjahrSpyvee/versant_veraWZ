@@ -1,0 +1,146 @@
+<mvc:View
+    controllerName="vsnt.vera.controller.steps.Basic"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:core="sap.ui.core">
+
+    <VBox class="sapUiMediumMargin">
+
+        <f:SimpleForm
+            title="{i18n>vendorName}"
+            editable="true"
+            layout="ResponsiveGridLayout"
+            labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
+            adjustLabelSpan="false"
+            emptySpanXL="0" emptySpanL="0" emptySpanM="0" emptySpanS="0"
+            columnsXL="2" columnsL="2" columnsM="1">
+
+            <f:content>
+                <Label text="{i18n>legalName}" required="true"/>
+                <Input id="legalName" value="{reg>/basic/legalName}" liveChange=".onBasicFieldChange"/>
+
+                <Label text="{i18n>invoicingName}"/>
+                <Input id="invoicingName" value="{reg>/basic/invoicingName}" liveChange=".onBasicFieldChange"/>
+            </f:content>
+        </f:SimpleForm>
+
+        <f:SimpleForm
+            title="{i18n>additionalInformation}"
+            editable="true"
+            layout="ResponsiveGridLayout"
+            labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
+            adjustLabelSpan="false"
+            columnsXL="2" columnsL="2" columnsM="1">
+
+            <f:content>
+                <Label text="{i18n>acceptPO}"/>
+                <CheckBox id="acceptPO" selected="{reg>/basic/acceptPO}" select=".onAcceptPOChange"/>
+
+                <Label text="{i18n>poEmailPlaceholder}" required="true" visible="{reg>/basic/acceptPO}"/>
+                <Input id="poEmail" value="{reg>/basic/poEmail}" type="Email"
+                       visible="{reg>/basic/acceptPO}" liveChange=".onBasicFieldChange"/>
+            </f:content>
+        </f:SimpleForm>
+
+        <f:SimpleForm
+            title="{i18n>primaryAddress}"
+            editable="true"
+            layout="ResponsiveGridLayout"
+            labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
+            adjustLabelSpan="false"
+            columnsXL="2" columnsL="2" columnsM="1">
+
+            <f:content>
+                <Label text="{i18n>country}" required="true"/>
+                <Select id="country" selectedKey="{reg>/basic/primaryAddress/country}"
+                        items="{reg>/ui/countries}" change=".onBasicFieldChange">
+                    <core:ListItem key="{reg>country}" text="{reg>description}"/>
+                </Select>
+
+                <Label text="{i18n>address1}" required="true"/>
+                <Input id="address1" value="{reg>/basic/primaryAddress/address1}" liveChange=".onBasicFieldChange"/>
+
+                <Label text="{i18n>address2}"/>
+                <Input id="address2" value="{reg>/basic/primaryAddress/address2}" liveChange=".onBasicFieldChange"/>
+
+                <Label text="{i18n>address3}"/>
+                <Input id="address3" value="{reg>/basic/primaryAddress/address3}" liveChange=".onBasicFieldChange"/>
+
+                <Label text="{i18n>city}" required="true"/>
+                <Input id="city" value="{reg>/basic/primaryAddress/city}" liveChange=".onBasicFieldChange"/>
+
+                <Label text="{i18n>state}" required="true"/>
+                <Select id="state" selectedKey="{reg>/basic/primaryAddress/state}"
+                        items="{reg>/ui/regions}" change=".onBasicFieldChange">
+                    <core:ListItem key="{reg>region}" text="{reg>description}"/>
+                </Select>
+
+                <Label text="{i18n>zipCode}" required="true"/>
+                <Input id="zip" value="{reg>/basic/primaryAddress/zip}"
+                       liveChange=".onBasicFieldChange" change=".onZipChange"/>
+            </f:content>
+        </f:SimpleForm>
+
+        <Panel
+            headerText="{i18n>secondaryAddresses}"
+            expandable="true"
+            expanded="false"
+            class="sapUiResponsiveMargin">
+
+            <headerToolbar>
+                <OverflowToolbar>
+                    <Title text="{i18n>secondaryAddresses}" level="H3"/>
+                    <ToolbarSpacer/>
+                    <Select id="secondaryAddressType" selectedKey="" width="10rem">
+                        <items>
+                            <core:Item key=""         text="{i18n>selectOne}"/>
+                            <core:Item key="MAILING"  text="Mailing"/>
+                            <core:Item key="BILLING"  text="Billing"/>
+                            <core:Item key="SHIPPING" text="Shipping"/>
+                            <core:Item key="OTHER"    text="Other"/>
+                        </items>
+                    </Select>
+                    <Button icon="sap-icon://add" tooltip="{i18n>btnAddAddress}"
+                            press=".onAddSecondaryAddress" type="Transparent"/>
+                </OverflowToolbar>
+            </headerToolbar>
+
+            <List id="secondaryAddressList"
+                  items="{reg>/basic/secondaryAddresses}"
+                  noDataText="{i18n>noSecondaryAddresses}"
+                  showSeparators="Inner">
+                <CustomListItem>
+                    <f:SimpleForm
+                        editable="true"
+                        layout="ResponsiveGridLayout"
+                        labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
+                        columnsXL="2" columnsL="2" columnsM="1">
+
+                        <f:toolbar>
+                            <Toolbar>
+                                <Title text="{reg>type}" level="H4"/>
+                                <ToolbarSpacer/>
+                                <Button icon="sap-icon://delete" type="Transparent"
+                                        press=".onRemoveSecondaryAddress" tooltip="{i18n>btnRemove}"/>
+                            </Toolbar>
+                        </f:toolbar>
+
+                        <f:content>
+                            <Label text="{i18n>address1}" required="true"/>
+                            <Input value="{reg>address1}" liveChange=".onBasicFieldChange"/>
+                            <Label text="{i18n>city}" required="true"/>
+                            <Input value="{reg>city}" liveChange=".onBasicFieldChange"/>
+                            <Label text="{i18n>state}" required="true"/>
+                            <Input value="{reg>state}" liveChange=".onBasicFieldChange"/>
+                            <Label text="{i18n>zipCode}" required="true"/>
+                            <Input value="{reg>zip}" liveChange=".onBasicFieldChange"/>
+                        </f:content>
+                    </f:SimpleForm>
+                </CustomListItem>
+            </List>
+        </Panel>
+
+    </VBox>
+
+</mvc:View>

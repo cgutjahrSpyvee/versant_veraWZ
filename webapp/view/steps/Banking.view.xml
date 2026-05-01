@@ -1,0 +1,200 @@
+<mvc:View
+    controllerName="vsnt.vera.controller.steps.Banking"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:u="sap.ui.unified"
+    xmlns:core="sap.ui.core">
+
+    <VBox class="sapUiMediumMargin">
+
+        <f:SimpleForm
+            title="{i18n>primaryAccount}"
+            editable="true"
+            layout="ResponsiveGridLayout"
+            labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
+            adjustLabelSpan="false"
+            columnsXL="2" columnsL="2" columnsM="1">
+
+            <f:content>
+                <Label text="{i18n>paymentMethod}" required="true"/>
+                <SegmentedButton
+                    id="primaryMethodToggle"
+                    selectedKey="{reg>/banking/primaryAccount/method}"
+                    selectionChange=".onPrimaryMethodChange">
+                    <items>
+                        <SegmentedButtonItem key="ACH"   text="ACH"/>
+                        <SegmentedButtonItem key="Wire"  text="Wire"/>
+                        <SegmentedButtonItem key="Check" text="Check"/>
+                    </items>
+                </SegmentedButton>
+
+                <Label text="{i18n>bankCountry}" required="true"/>
+                <Select id="primaryCountry" selectedKey="{reg>/banking/primaryAccount/country}"
+                        change=".onBankingFieldChange">
+                    <items>
+                        <core:Item key="US"    text="United States"/>
+                        <core:Item key="CA"    text="Canada"/>
+                        <core:Item key="GB"    text="United Kingdom"/>
+                        <core:Item key="MX"    text="Mexico"/>
+                        <core:Item key="AU"    text="Australia"/>
+                        <core:Item key="NZ"    text="New Zealand"/>
+                        <core:Item key="OTHER" text="Other"/>
+                    </items>
+                </Select>
+
+                <Label text="{i18n>bankRoutingNum}" required="true"
+                       visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"/>
+                <Input
+                    id="primaryRouting"
+                    value="{reg>/banking/primaryAccount/routingNum}"
+                    maxLength="9"
+                    visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
+                    liveChange=".onBankingFieldChange"/>
+
+                <Label text="{i18n>bankAccountNum}" required="true"
+                       visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"/>
+                <Input
+                    id="primaryAccountNum"
+                    value="{reg>/banking/primaryAccount/accountNum}"
+                    maxLength="17"
+                    visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
+                    liveChange=".onBankingFieldChange"/>
+
+                <Label text="{i18n>accountHolderName}" required="true"
+                       visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"/>
+                <Input
+                    id="primaryHolderName"
+                    value="{reg>/banking/primaryAccount/holderName}"
+                    visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
+                    liveChange=".onBankingFieldChange"/>
+
+                <Label text="{i18n>uploadBankDetailsForm}" required="true"/>
+                <HBox alignItems="Center">
+                    <u:FileUploader
+                        id="primaryBankFileUploader"
+                        name="bankDetails"
+                        fileType="pdf,jpg,png"
+                        maximumFileSize="10"
+                        change=".onPrimaryBankFileChange"
+                        buttonText="{i18n>chooseFile}"/>
+                    <ObjectStatus
+                        text="{reg>/banking/primaryAccount/bankFileName}"
+                        state="Success"
+                        icon="sap-icon://document"
+                        visible="{= !!${reg>/banking/primaryAccount/bankFileName}}"
+                        class="sapUiSmallMarginBegin"/>
+                </HBox>
+
+                <Label text=""/>
+                <Link
+                    text="{i18n>downloadBlankForm}"
+                    href="/irj/go/km/docs/nbcu_km/Vendor%20Portal/Documents/NBCU%20Global%20Vendor%20Bank%20Detail%20Form.xlsx"
+                    target="_blank"
+                    icon="sap-icon://download"/>
+            </f:content>
+        </f:SimpleForm>
+
+        <Panel headerText="{i18n>secondaryAccounts}" expandable="true" expanded="false">
+
+            <headerToolbar>
+                <OverflowToolbar>
+                    <Title text="{i18n>secondaryAccounts}" level="H3"/>
+                    <ToolbarSpacer/>
+                    <Button icon="sap-icon://add" tooltip="{i18n>btnAddAccount}"
+                            press=".onAddSecondaryAccount" type="Transparent"/>
+                </OverflowToolbar>
+            </headerToolbar>
+
+            <List
+                id="secondaryAccountList"
+                items="{reg>/banking/secondaryAccounts}"
+                noDataText="{i18n>noSecondaryAccounts}"
+                showSeparators="Inner">
+                <CustomListItem>
+                    <f:SimpleForm
+                        editable="true"
+                        layout="ResponsiveGridLayout"
+                        labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
+                        columnsXL="2" columnsL="2" columnsM="1">
+
+                        <f:toolbar>
+                            <Toolbar>
+                                <Title text="{i18n>account}" level="H4"/>
+                                <ToolbarSpacer/>
+                                <Button icon="sap-icon://delete" type="Transparent"
+                                        press=".onRemoveSecondaryAccount" tooltip="{i18n>btnRemove}"/>
+                            </Toolbar>
+                        </f:toolbar>
+
+                        <f:content>
+                            <Label text="{i18n>paymentMethod}" required="true"/>
+                            <SegmentedButton selectedKey="{reg>method}">
+                                <items>
+                                    <SegmentedButtonItem key="ACH"   text="ACH"/>
+                                    <SegmentedButtonItem key="Wire"  text="Wire"/>
+                                    <SegmentedButtonItem key="Check" text="Check"/>
+                                </items>
+                            </SegmentedButton>
+
+                            <Label text="{i18n>bankCountry}" required="true"/>
+                            <Select selectedKey="{reg>country}">
+                                <items>
+                                    <core:Item key="US"    text="United States"/>
+                                    <core:Item key="CA"    text="Canada"/>
+                                    <core:Item key="GB"    text="United Kingdom"/>
+                                    <core:Item key="OTHER" text="Other"/>
+                                </items>
+                            </Select>
+
+                            <Label text="{i18n>bankRoutingNum}" required="true"/>
+                            <Input value="{reg>routingNum}" maxLength="9"/>
+                            <Label text="{i18n>bankAccountNum}" required="true"/>
+                            <Input value="{reg>accountNum}" maxLength="17"/>
+                            <Label text="{i18n>accountHolderName}" required="true"/>
+                            <Input value="{reg>holderName}"/>
+                        </f:content>
+                    </f:SimpleForm>
+                </CustomListItem>
+            </List>
+        </Panel>
+
+        <Panel headerText="{i18n>paymentNotifications}" expandable="true" expanded="false">
+
+            <VBox class="sapUiMediumMargin">
+                <HBox alignItems="End">
+                    <Input
+                        id="newNotificationEmail"
+                        value="{reg>/ui/newNotificationEmail}"
+                        placeholder="{i18n>emailAddress}"
+                        type="Email"
+                        liveChange=".onNotificationEmailChange"
+                        valueState="{= ${reg>/ui/notificationEmailError} ? 'Error' : 'None'}"
+                        valueStateText="{i18n>invalidEmailFormat}"
+                        class="sapUiTinyMarginEnd"/>
+                    <Button icon="sap-icon://add" tooltip="{i18n>btnAddEmailContact}"
+                            press=".onAddNotificationEmail" type="Transparent"/>
+                </HBox>
+
+                <List
+                    id="notificationEmailList"
+                    items="{reg>/banking/paymentNotifications}"
+                    noDataText="{i18n>noNotificationEmails}"
+                    class="sapUiSmallMarginTop">
+                    <CustomListItem>
+                        <HBox justifyContent="SpaceBetween" alignItems="Center" width="100%">
+                            <HBox alignItems="Center">
+                                <core:Icon src="sap-icon://email" class="sapUiTinyMarginEnd"/>
+                                <Text text="{reg>email}"/>
+                            </HBox>
+                            <Button icon="sap-icon://delete" type="Transparent"
+                                    press=".onRemoveNotificationEmail" tooltip="{i18n>btnRemove}"/>
+                        </HBox>
+                    </CustomListItem>
+                </List>
+            </VBox>
+        </Panel>
+
+    </VBox>
+
+</mvc:View>

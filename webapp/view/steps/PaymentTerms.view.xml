@@ -1,0 +1,40 @@
+<mvc:View
+    controllerName="vsnt.vera.controller.steps.PaymentTerms"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <VBox class="sapUiMediumMargin">
+
+        <Title text="{i18n>paymentTermsTitle}" level="H3" class="sapUiSmallMarginBottom"/>
+        <Text text="{i18n>paymentTermsHint}" class="sapUiSmallMarginBottom"/>
+
+        <List
+            id="paymentTermsList"
+            mode="SingleSelectMaster"
+            selectionChange=".onPaymentTermSelect"
+            items="{reg>/paymentTerms/availableTerms}"
+            busy="{= ${reg>/paymentTerms/availableTerms}.length === 0}"
+            noDataText="{i18n>loadingPaymentTerms}">
+
+            <StandardListItem
+                title="{reg>Description}"
+                description="{reg>Key}"
+                type="Active"
+                selected="{= ${reg>/paymentTerms/selected} === ${reg>Key}}">
+                <customData>
+                    <core:CustomData key="termKey" value="{reg>Key}"/>
+                </customData>
+            </StandardListItem>
+        </List>
+
+        <MessageStrip
+            text="{i18n>selectPaymentTermWarning}"
+            type="Warning"
+            showIcon="true"
+            visible="{= ${reg>/paymentTerms/availableTerms}.length > 0 &amp;&amp; !${reg>/paymentTerms/selected}}"
+            class="sapUiMediumMarginTop"/>
+
+    </VBox>
+
+</mvc:View>

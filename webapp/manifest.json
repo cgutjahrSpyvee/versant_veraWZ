@@ -1,0 +1,103 @@
+{
+  "_version": "1.58.0",
+  "sap.app": {
+    "id": "vsnt.vera",
+    "type": "application",
+    "title": "VeRA - Vendor Registration Application",
+    "description": "Vendor Registration and Maintenance Portal",
+    "applicationVersion": { "version": "1.0.0" },
+    "dataSources": {
+      "VeRA_Portal": {
+        "uri": "/vera-portal/",
+        "type": "http",
+        "settings": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "VeRA-register": {
+          "semanticObject": "VeRA",
+          "action": "register",
+          "signature": { "parameters": {}, "additionalParameters": "allowed" },
+          "title": "Register as Vendor",
+          "icon": "sap-icon://vendor"
+        },
+        "VeRA-maintain": {
+          "semanticObject": "VeRA",
+          "action": "maintain",
+          "signature": { "parameters": {}, "additionalParameters": "allowed" },
+          "title": "Maintain Vendor Record",
+          "icon": "sap-icon://edit"
+        },
+        "VeRA-status": {
+          "semanticObject": "VeRA",
+          "action": "status",
+          "signature": { "parameters": {}, "additionalParameters": "allowed" },
+          "title": "Vendor Registration Status",
+          "icon": "sap-icon://status-in-process"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": { "desktop": true, "tablet": true, "phone": false }
+  },
+  "sap.fiori": {
+    "registrationIds": ["F-VeRA-01"],
+    "archeType": "transactional"
+  },
+  "sap.ui5": {
+    "rootView": {
+      "viewName": "vsnt.vera.view.App",
+      "type": "XML",
+      "async": true,
+      "id": "app"
+    },
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ui.layout": {},
+        "sap.f": {},
+        "sap.ui.unified": {},
+        "sap.ushell": {}
+      }
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": { "bundleName": "vsnt.vera.i18n.i18n" }
+      }
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "viewType": "XML",
+        "viewPath": "vsnt.vera.view",
+        "controlId": "appNav",
+        "controlAggregation": "pages",
+        "async": true
+      },
+      "routes": [
+        { "name": "home",     "pattern": "",                "target": "home" },
+        { "name": "register", "pattern": "register/{mode}", "target": "registration" },
+        { "name": "status",   "pattern": "status",          "target": "status" }
+      ],
+      "targets": {
+        "home":         { "viewName": "Home",         "viewLevel": 1 },
+        "registration": { "viewName": "Registration", "viewLevel": 2 },
+        "status":       { "viewName": "Status",       "viewLevel": 1 }
+      }
+    },
+    "contentDensities": { "compact": true, "cozy": true },
+    "resources": {
+      "css": [{ "uri": "css/vera.css" }]
+    }
+  }
+}

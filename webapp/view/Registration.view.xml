@@ -1,0 +1,95 @@
+<mvc:View
+    controllerName="vsnt.vera.controller.Registration"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:l="sap.ui.layout"
+    xmlns:core="sap.ui.core">
+
+    <Page
+        id="registrationPage"
+        title="{i18n>registrationTitle}"
+        showNavButton="true"
+        navButtonPress=".onCancel"
+        busy="{reg>/ui/busy}">
+
+        <content>
+
+            <Wizard
+                id="veraWizard"
+                complete=".onWizardComplete"
+                finishButtonText="{i18n>btnSubmit}"
+                showNextButton="true">
+
+                <WizardStep
+                    id="stepBasic"
+                    title="{i18n>tabBasic}"
+                    icon="sap-icon://home"
+                    validated="{reg>/wizard/stepsValidated/0}"
+                    complete=".onStepBasicComplete">
+                    <mvc:XMLView id="basicView" viewName="vsnt.vera.view.steps.Basic"/>
+                </WizardStep>
+
+                <WizardStep
+                    id="stepTax"
+                    title="{i18n>tabTax}"
+                    icon="sap-icon://documents"
+                    validated="{reg>/wizard/stepsValidated/1}"
+                    complete=".onStepTaxComplete">
+                    <mvc:XMLView id="taxView" viewName="vsnt.vera.view.steps.Tax"/>
+                </WizardStep>
+
+                <WizardStep
+                    id="stepPaymentTerms"
+                    title="{i18n>tabPaymentTerms}"
+                    icon="sap-icon://payment-approval"
+                    validated="{reg>/wizard/stepsValidated/2}"
+                    complete=".onStepPaymentTermsComplete">
+                    <mvc:XMLView id="paymentTermsView" viewName="vsnt.vera.view.steps.PaymentTerms"/>
+                </WizardStep>
+
+                <WizardStep
+                    id="stepBanking"
+                    title="{i18n>tabBanking}"
+                    icon="sap-icon://money-bills"
+                    validated="{reg>/wizard/stepsValidated/3}"
+                    complete=".onStepBankingComplete">
+                    <mvc:XMLView id="bankingView" viewName="vsnt.vera.view.steps.Banking"/>
+                </WizardStep>
+
+                <WizardStep
+                    id="stepContacts"
+                    title="{i18n>tabContacts}"
+                    icon="sap-icon://contacts"
+                    validated="{reg>/wizard/stepsValidated/4}"
+                    complete=".onStepContactsComplete">
+                    <mvc:XMLView id="contactsView" viewName="vsnt.vera.view.steps.Contacts"/>
+                </WizardStep>
+
+            </Wizard>
+
+        </content>
+
+        <footer>
+            <OverflowToolbar>
+                <ToolbarSpacer/>
+                <Button
+                    text="{i18n>btnSaveForLater}"
+                    icon="sap-icon://save"
+                    press=".onSaveForLater"
+                    type="Transparent"/>
+                <Button
+                    text="{i18n>btnCancel}"
+                    press=".onCancel"
+                    type="Transparent"/>
+                <Button
+                    id="nextButton"
+                    text="{i18n>btnNext}"
+                    icon="sap-icon://navigation-right-arrow"
+                    press=".onNextStep"
+                    type="Emphasized"/>
+            </OverflowToolbar>
+        </footer>
+
+    </Page>
+
+</mvc:View>

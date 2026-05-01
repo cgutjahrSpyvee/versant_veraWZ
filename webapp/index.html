@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeRA – Vendor Registration</title>
+
+    <script>
+        window["sap-ushell-config"] = {
+            defaultRenderer: "fiori2",
+            applications: {
+                "VeRA-register": {
+                    additionalInformation: "SAPUI5.Component=vsnt.vera",
+                    applicationType:       "URL",
+                    url:                   "/",
+                    navigationMode:        "embedded"
+                }
+            }
+        };
+    </script>
+
+    <script
+        id="sap-ui-bootstrap"
+        src="/resources/sap-ui-core.js"
+        data-sap-ui-theme="sap_horizon"
+        data-sap-ui-resourceroots='{ "vsnt.vera": "./" }'
+        data-sap-ui-compatVersion="edge"
+        data-sap-ui-async="true"
+        data-sap-ui-frameOptions="trusted"
+        data-sap-ui-libs="sap.m,sap.ui.core,sap.ui.layout,sap.f,sap.ui.unified,sap.ushell">
+    </script>
+
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; }
+    </style>
+
+    <script>
+        sap.ui.getCore().attachInit(function () {
+            sap.ui.require([
+                "sap/ushell/bootstrap/sandbox",
+                "sap/m/Shell",
+                "sap/ui/core/ComponentContainer"
+            ], function (oSandbox, Shell, ComponentContainer) {
+                new Shell({
+                    app: new ComponentContainer({
+                        name:     "vsnt.vera",
+                        settings: { id: "vera" },
+                        async:    true
+                    }),
+                    appWidthLimited: false
+                }).placeAt("content");
+            });
+        });
+    </script>
+</head>
+<body class="sapUiBody" id="content">
+</body>
+</html>

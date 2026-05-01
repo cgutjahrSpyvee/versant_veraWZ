@@ -1,0 +1,155 @@
+<mvc:View
+    controllerName="vsnt.vera.controller.Status"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:core="sap.ui.core">
+
+    <Page
+        id="statusPage"
+        title="{i18n>statusPageTitle}"
+        showNavButton="true"
+        navButtonPress=".onNavHome"
+        busy="{inbox>/busy}">
+
+        <content>
+
+            <ObjectHeader
+                title="{= ${reg>/status} === 'APPROVED' ? ${i18n>statusApproved} :
+                          ${reg>/status} === 'REJECTED' ? ${i18n>statusRejected} :
+                          ${reg>/status} === 'PENDING'  ? ${i18n>statusPending}  :
+                          ${i18n>statusDraft}}"
+                responsive="true"
+                condensed="false"
+                icon="{= ${reg>/status} === 'APPROVED' ? 'sap-icon://accept'  :
+                          ${reg>/status} === 'REJECTED' ? 'sap-icon://decline' :
+                          ${reg>/status} === 'PENDING'  ? 'sap-icon://pending' :
+                          'sap-icon://edit'}"
+                iconDensityAware="false">
+
+                <statuses>
+                    <ObjectStatus
+                        text="{= ${reg>/status} === 'APPROVED' ? 'Approved' :
+                                  ${reg>/status} === 'REJECTED' ? 'Rejected' :
+                                  ${reg>/status} === 'PENDING'  ? 'In Review' : 'Draft'}"
+                        state="{= ${reg>/status} === 'APPROVED' ? 'Success' :
+                                   ${reg>/status} === 'REJECTED' ? 'Error'   :
+                                   ${reg>/status} === 'PENDING'  ? 'Warning' : 'None'}"/>
+                </statuses>
+
+                <attributes>
+                    <ObjectAttribute
+                        text="{= ${reg>/status} === 'APPROVED'
+                            ? ${i18n>statusApprovedDesc}
+                            : ${reg>/status} === 'REJECTED'
+                            ? ${i18n>statusRejectedDesc}
+                            : ${reg>/status} === 'PENDING'
+                            ? ${i18n>statusPendingDesc}
+                            : ${i18n>statusDraftDesc}}"/>
+                </attributes>
+
+                <headerContainer>
+                    <OverflowToolbar>
+                        <Button
+                            text="{i18n>btnRegister}"
+                            press=".onNavRegister"
+                            type="Emphasized"
+                            icon="sap-icon://add"
+                            visible="{= ${reg>/status} === 'DRAFT'}"/>
+                        <Button
+                            text="{i18n>btnMaintain}"
+                            press=".onNavMaintain"
+                            icon="sap-icon://edit"
+                            visible="{= ${reg>/status} === 'APPROVED'}"/>
+                    </OverflowToolbar>
+                </headerContainer>
+
+            </ObjectHeader>
+
+            <Panel
+                headerText="{i18n>myRequests}"
+                visible="{= ${inbox>/items}.length > 0}"
+                class="sapUiSmallMarginTop">
+
+                <Table
+                    id="inboxTable"
+                    items="{inbox>/items}"
+                    mode="SingleSelect"
+                    growing="true"
+                    growingThreshold="20"
+                    noDataText="{i18n>noRequests}">
+
+                    <columns>
+                        <Column><Text text="{i18n>requestId}"/></Column>
+                        <Column><Text text="{i18n>vendorName}"/></Column>
+                        <Column><Text text="{i18n>status}"/></Column>
+                        <Column><Text text="{i18n>lastUpdated}"/></Column>
+                        <Column><Text text="{i18n>source}"/></Column>
+                        <Column hAlign="End"><Text text="{i18n>actions}"/></Column>
+                    </columns>
+
+                    <items>
+                        <ColumnListItem>
+                            <cells>
+                                <ObjectIdentifier title="{inbox>id}"/>
+                                <Text text="{inbox>name}"/>
+                                <ObjectStatus
+                                    text="{inbox>status/text}"
+                                    state="{= ${inbox>status/text} === 'Completed' ||
+                                              ${inbox>status/text} === 'Invite Approved' ? 'Success' :
+                                              ${inbox>status/text} === 'Rejected' ||
+                                              ${inbox>status/text} === 'Failed' ||
+                                              ${inbox>status/text} === 'Email Address Failure' ? 'Error' :
+                                              ${inbox>status/text} === 'Invite Registered' ||
+                                              ${inbox>status/text} === 'In Review' ||
+                                              ${inbox>status/text} === 'Pending Approval' ||
+                                              ${inbox>status/text} === 'Pending Submission' ? 'Warning' : 'None'}"/>
+                                <Text text="{inbox>date}"/>
+                                <Text text="{inbox>source}"/>
+                                <OverflowToolbar>
+                                    <ToolbarSpacer/>
+                                    <Button
+                                        icon="sap-icon://refresh"
+                                        tooltip="{i18n>btnResend}"
+                                        press=".onResendRequest"
+                                        type="Transparent"
+                                        visible="{= ${inbox>actionkey} &amp;&amp; ${inbox>actionkey}.indexOf('R') >= 0}">
+                                        <customData>
+                                            <core:CustomData key="requestId" value="{inbox>id}" writeToDom="false"/>
+                                        </customData>
+                                    </Button>
+                                    <Button
+                                        icon="sap-icon://decline"
+                                        tooltip="{i18n>btnCancel}"
+                                        press=".onCancelRequest"
+                                        type="Transparent"
+                                        visible="{= ${inbox>actionkey} &amp;&amp; ${inbox>actionkey}.indexOf('C') >= 0}">
+                                        <customData>
+                                            <core:CustomData key="requestId" value="{inbox>id}" writeToDom="false"/>
+                                        </customData>
+                                    </Button>
+                                </OverflowToolbar>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </Panel>
+
+            <IllustratedMessage
+                illustrationType="NoData"
+                title="{i18n>noRequestsTitle}"
+                description="{i18n>noRequestsDescription}"
+                visible="{= ${inbox>/items}.length === 0 &amp;&amp; !${inbox>/busy}}">
+                <additionalContent>
+                    <Button
+                        text="{i18n>btnRegister}"
+                        press=".onNavRegister"
+                        type="Emphasized"
+                        icon="sap-icon://add"/>
+                </additionalContent>
+            </IllustratedMessage>
+
+        </content>
+    </Page>
+
+</mvc:View>

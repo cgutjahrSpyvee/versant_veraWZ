@@ -1,0 +1,13 @@
+/*
+ * vera.css — minimal custom styling.
+ *
+ * The VeRA app uses standard SAP Fiori controls with built-in Horizon
+ * theme styling. Only overrides for things the standard controls don't
+ * cover belong here. Keep this file short — if a style rule can be
+ * expressed with a standard SAP utility class (sapUiSmallMargin,
+ * sapUiResponsivePadding, etc.), use that instead.
+ */
+
+.sapMWizardStepContainer {
+    padding: 1rem 0;
+}
