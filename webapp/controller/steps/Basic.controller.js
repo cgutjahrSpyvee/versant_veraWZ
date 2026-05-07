@@ -48,6 +48,12 @@ sap.ui.define([
 
         onBasicFieldChange: function () { this._validateStep(); },
 
+        onVendorTypeChange: function (oEvent) {
+            var sVendorType = oEvent.getParameter("selectedItem").getKey();
+            this._reg().setProperty("/vendorType", sVendorType);
+            this._validateStep();
+        },
+
         onAcceptPOChange: function (oEvent) {
             var bAccept = oEvent.getParameter("selected");
             if (!bAccept) {

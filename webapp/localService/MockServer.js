@@ -52,9 +52,11 @@ sap.ui.define([
                 { "Content-Type": "application/json" },
                 JSON.stringify([
                     { Key: "NET20", Description: "Net 20 Days" },
-                    { Key: "NET30", Description: "Net 30 Days" },
+                    { Key: "NET30", Description: "Net 30 Days (nonstandard)" },
                     { Key: "NET45", Description: "Net 45 Days" },
                     { Key: "NET60", Description: "Net 60 Days" },
+                    { Key: "NET75", Description: "Net 75 Days" },
+                    { Key: "2.50%DISC15DAYS", Description: "2.50% Disc 15 Days, 1.50% 30 Days, Net 75" },
                     { Key: "IMM",   Description: "Immediate Payment" }
                 ])
             ]);

@@ -6,6 +6,10 @@
     "title": "VeRA - Vendor Registration Application",
     "description": "Vendor Registration and Maintenance Portal",
     "applicationVersion": { "version": "1.0.0" },
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.0.0"
+    },
     "dataSources": {
       "VeRA_Portal": {
         "uri": "/vera-portal/",
@@ -46,6 +50,10 @@
   "sap.ui": {
     "technology": "UI5",
     "deviceTypes": { "desktop": true, "tablet": true, "phone": false }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "vera-html5-host"
   },
   "sap.fiori": {
     "registrationIds": ["F-VeRA-01"],

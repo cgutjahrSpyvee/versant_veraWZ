@@ -36,6 +36,7 @@
                     header="{i18n>btnMaintain}"
                     subheader="{i18n>homeMaintainDesc}"
                     press=".onNavMaintain"
+                    visible="false"
                     frameType="TwoByOne">
                     <TileContent>
                         <ImageContent src="sap-icon://edit"/>
@@ -48,6 +49,7 @@
                 <GenericTile
                     header="{i18n>btnStatus}"
                     subheader="{i18n>homeStatusDesc}"
+                    visible="false"
                     press=".onNavStatus"
                     frameType="TwoByOne">
                     <TileContent>

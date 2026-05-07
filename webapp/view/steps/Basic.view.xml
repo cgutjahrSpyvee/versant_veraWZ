@@ -34,6 +34,14 @@
             columnsXL="2" columnsL="2" columnsM="1">
 
             <f:content>
+                <Label text="Vendor Type" required="true"/>
+                <Select id="vendorType" selectedKey="{reg>/vendorType}" change=".onVendorTypeChange">
+                    <core:Item key="" text="Select Vendor Type"/>
+                    <core:Item key="GOODS" text="Goods"/>
+                    <core:Item key="SERVICES" text="Services"/>
+                    <core:Item key="BOTH" text="Both"/>
+                </Select>
+
                 <Label text="{i18n>acceptPO}"/>
                 <CheckBox id="acceptPO" selected="{reg>/basic/acceptPO}" select=".onAcceptPOChange"/>
 

@@ -351,14 +351,9 @@ sap.ui.define([
             if (this._csrfToken) {
                 return jQuery.Deferred().resolve(this._csrfToken).promise();
             }
-            return jQuery.ajax({
-                url:  BASE + "htmlhelper?type=getCountry",
-                type: "GET",
-                headers: { "X-CSRF-Token": "Fetch" }
-            }).then(function (data, status, jqXHR) {
-                that._csrfToken = jqXHR.getResponseHeader("X-CSRF-Token");
-                return that._csrfToken;
-            });
+            // For testing: removed call to htmlhelper?type=getCountry
+            // CSRF token will be fetched on first actual backend call if needed
+            return jQuery.Deferred().resolve(null).promise();
         },
 
         _csrfHeaders: function () {
@@ -368,14 +363,18 @@ sap.ui.define([
         // ── HTTP helpers ────────────────────────────────────────────────
 
         _get: function (sService, oParams) {
+            var that = this;
             Log.debug("VeRAService GET " + sService, JSON.stringify(oParams));
-            return jQuery.ajax({
-                url:  BASE + sService,
-                type: "GET",
-                data: oParams,
-                dataType: "json"
-            }).fail(function (jqXHR, sStatus, sError) {
-                Log.error("VeRAService GET failed: " + sService + " — " + sError);
+            return this._fetchCsrfToken().then(function () {
+                return jQuery.ajax({
+                    url:  BASE + sService,
+                    type: "GET",
+                    data: oParams,
+                    dataType: "json",
+                    headers: that._csrfHeaders()
+                }).fail(function (jqXHR, sStatus, sError) {
+                    Log.error("VeRAService GET failed: " + sService + " — " + sError);
+                });
             });
         },
 
