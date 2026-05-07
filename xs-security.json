@@ -1,0 +1,7 @@
+{
+  "xsappname": "vera-fiori",
+  "tenant-mode": "dedicated",
+  "description": "Security profile for VeRA Vendor Registration Application",
+  "scopes": [],
+  "role-templates": []
+}

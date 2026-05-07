@@ -53,7 +53,7 @@
   },
   "sap.cloud": {
     "public": true,
-    "service": "vera-html5-host"
+    "service": "vsnt.vera"
   },
   "sap.fiori": {
     "registrationIds": ["F-VeRA-01"],

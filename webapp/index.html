@@ -3,56 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>VeRA – Vendor Registration</title>
-
-    <script>
-        window["sap-ushell-config"] = {
-            defaultRenderer: "fiori2",
-            applications: {
-                "VeRA-register": {
-                    additionalInformation: "SAPUI5.Component=vsnt.vera",
-                    applicationType:       "URL",
-                    url:                   "/",
-                    navigationMode:        "embedded"
-                }
-            }
-        };
-    </script>
-
+    <style>
+        html, body, body > div, #content, #content-uiarea {
+            height: 100%;
+        }
+    </style>
     <script
         id="sap-ui-bootstrap"
-        src="/resources/sap-ui-core.js"
+        src="resources/sap-ui-core.js"
         data-sap-ui-theme="sap_horizon"
-        data-sap-ui-resourceroots='{ "vsnt.vera": "./" }'
-        data-sap-ui-compatVersion="edge"
+        data-sap-ui-resource-roots='{"vsnt.vera": "./"}'
+        data-sap-ui-on-init="module:sap/ui/core/ComponentSupport"
+        data-sap-ui-compat-version="edge"
         data-sap-ui-async="true"
-        data-sap-ui-frameOptions="trusted"
-        data-sap-ui-libs="sap.m,sap.ui.core,sap.ui.layout,sap.f,sap.ui.unified,sap.ushell">
-    </script>
-
-    <style>
-        html, body { margin: 0; padding: 0; height: 100%; }
-    </style>
-
-    <script>
-        sap.ui.getCore().attachInit(function () {
-            sap.ui.require([
-                "sap/ushell/bootstrap/sandbox",
-                "sap/m/Shell",
-                "sap/ui/core/ComponentContainer"
-            ], function (oSandbox, Shell, ComponentContainer) {
-                new Shell({
-                    app: new ComponentContainer({
-                        name:     "vsnt.vera",
-                        settings: { id: "vera" },
-                        async:    true
-                    }),
-                    appWidthLimited: false
-                }).placeAt("content");
-            });
-        });
-    </script>
+        data-sap-ui-frame-options="trusted"
+    ></script>
 </head>
-<body class="sapUiBody" id="content">
+<body class="sapUiBody sapUiSizeCompact" id="content">
+    <div
+        data-sap-ui-component
+        data-name="vsnt.vera"
+        data-id="container"
+        data-settings='{"id": "vera"}'
+        data-handle-validation="true"
+    ></div>
 </body>
 </html>
