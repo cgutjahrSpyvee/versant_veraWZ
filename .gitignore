@@ -2,6 +2,7 @@ node_modules/
 dist/
 .scp/
 .env
+default-env.json
 Makefile*.mta
 mta_archives
 mta-*

@@ -2,12 +2,13 @@
  * VeRAService.js
  *
  * Calls the existing Java portal service endpoints on the on-premise
- * NetWeaver Portal via the BTP destination "VERA_PORTAL", which is
+ * NetWeaver Portal via the BTP destination "Coding_Portal_QA", which is
  * proxied through the SAP Connectivity Service / Cloud Connector.
  *
- * BASE = "/vera-portal/"
- *   The Workzone managed approuter rewrites this path to the full
- *   portal URL via xs-app.json route → destination VERA_PORTAL.
+ * BASE = "/<service-segment>/vera-portal/"  (computed at runtime)
+ *   In Workzone, the app runs at /<service-segment>/index.html.
+ *   xs-app.json source "^<apply-service-segment-path>/vera-portal/(.*)"
+ *   catches requests at that prefix and proxies via destination Coding_Portal_QA.
  */
 sap.ui.define([
     "sap/ui/base/Object",
@@ -15,7 +16,11 @@ sap.ui.define([
 ], function (BaseObject, Log) {
     "use strict";
 
-    var BASE = "/vera-portal/";
+    // In Workzone / HTML5 App Repo the app is served at /<service-segment>/index.html.
+    // XHR must go through that same prefix so the managed approuter picks up the
+    // xs-app.json route "<apply-service-segment-path>/vera-portal/(.*)".
+    // window.location.pathname.replace strips the filename, leaving "/<service-segment>/".
+    var BASE = window.location.pathname.replace(/\/[^/]*$/, "/") + "vera-portal/";
     var _instance = null;
 
     var VeRAService = BaseObject.extend("vsnt.vera.model.VeRAService", {

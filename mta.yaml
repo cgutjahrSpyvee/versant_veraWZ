@@ -3,6 +3,16 @@ ID: vera-fiori
 description: VeRA Vendor Registration Application
 version: 1.0.0
 modules:
+- name: vera-fiori-approuter
+  type: approuter.nodejs
+  path: approuter
+  requires:
+  - name: vera-fiori-destination-service
+  - name: vera-connectivity
+  - name: vera-fiori-uaa
+  parameters:
+    disk-quota: 256M
+    memory: 256M
 - name: vera-fiori-destination-content
   type: com.sap.application.content
   requires:
@@ -72,15 +82,20 @@ resources:
             Type: HTTP
             URL: https://ui5.sap.com
           - Authentication: NoAuthentication
-            Name: VERA_PORTAL
+            Name: VeRA_Backend
             ProxyType: Internet
             Type: HTTP
-            URL: http://placeholder-backend.local
-            HTML5.DynamicDestination: true
+            URL: https://nbcuniversal-media--llc-versant-cf-bwz-dev-use-75tfnrq659c99ec0.cfapps.us10-001.hana.ondemand.com
           existing_destinations_policy: update
       version: 1.0.0
     service: destination
     service-name: vera-destination-service
+    service-plan: lite
+- name: vera-connectivity
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: connectivity
+    service-name: vera-connectivity-service
     service-plan: lite
 - name: vera-fiori-uaa
   type: org.cloudfoundry.managed-service

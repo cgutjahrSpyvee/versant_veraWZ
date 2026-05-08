@@ -11,10 +11,10 @@
     },
     {
       "source": "^/vera-portal/(.*)",
-      "target": "$1",
-      "destination": "VERA_PORTAL",
+      "target": "/vera-portal/$1",
+      "destination": "VeRA_Backend",
       "authenticationType": "xsuaa",
-      "csrfProtection": true
+      "csrfProtection": false
     },
     {
       "source": "^/resources/(.*)$",
