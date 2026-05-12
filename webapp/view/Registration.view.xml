@@ -76,7 +76,7 @@
                     text="{i18n>btnSaveForLater}"
                     icon="sap-icon://save"
                     press=".onSaveForLater"
-                    type="Transparent"/>
+                    type="Transparent" visible="false"/>
                 <Button
                     text="{i18n>btnCancel}"
                     press=".onCancel"
