@@ -16,12 +16,19 @@ sap.ui.define([
 ], function (BaseObject, Log) {
     "use strict";
 
-    // In Workzone / HTML5 App Repo the app is served at /<service-segment>/index.html.
-    // XHR must go through that same prefix so the managed approuter picks up the
-    // xs-app.json route "<apply-service-segment-path>/vera-portal/(.*)".
-    // window.location.pathname.replace strips the filename, leaving "/<service-segment>/".
-    var BASE = window.location.pathname.replace(/\/[^/]*$/, "/") + "vera-portal/";
+    // Derive the app's service-segment from the UI5 module path and manifest version.
+    // Module path: "/<site-id>.<cloud-service>.<app-id>/~cachebuster~/..."
+    // Full Work Zone segment: "<site-id>.<cloud-service>.<app-id>-<version>"
+    var sModulePath = sap.ui.require.toUrl("vsnt/vera");
+    var sAppSegment = sModulePath.split("/")[1];
+    var sVersion = jQuery.sap.loadResource("vsnt/vera/manifest.json", {async: false})["sap.app"].applicationVersion.version;
+    var BASE = "/" + sAppSegment + "-" + sVersion + "/vera-portal/";
     var _instance = null;
+
+    // Check if the user is accessing the application outside of WZ
+    if (sModulePath === ".") {
+        BASE = window.location.pathname.replace(/\/[^/]*$/, "/") + "vera-portal/";
+    }
 
     var VeRAService = BaseObject.extend("vsnt.vera.model.VeRAService", {
 
