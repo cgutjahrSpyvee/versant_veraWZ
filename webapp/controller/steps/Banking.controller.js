@@ -90,7 +90,7 @@ sap.ui.define([
                 // if (!oP.bankDocId) { aMissing.push("Bank Details Form"); }
             }
             var bValid = aMissing.length === 0;
-            this._reg().setProperty("/wizard/stepsValidated/3", bValid);
+            this._reg().setProperty("/wizard/stepsValidated/4", bValid);
             this._missingFields = aMissing;
             return bValid;
         },

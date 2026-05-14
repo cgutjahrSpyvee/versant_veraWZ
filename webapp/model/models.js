@@ -38,11 +38,12 @@ sap.ui.define([
                     taxTouched:                 false,
                     paymentTermsTouched:        false,
                     bankingTouched:             false,
-                    contactsTouched:            false
+                    contactsTouched:            false,
+                    companyApproverTouched:      false
                 },
 
                 wizard: {
-                    stepsValidated: [false, false, false, false, false]
+                    stepsValidated: [false, false, false, false, false, false]
                 },
 
                 basic: {

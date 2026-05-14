@@ -41,13 +41,13 @@ sap.ui.define([
         onPaymentTermSelect: function (oEvent) {
             var sKey = oEvent.getParameter("selectedItem").getKey();
             this._reg().setProperty("/paymentTerms/selected", sKey);
-            this._reg().setProperty("/wizard/stepsValidated/2", !!sKey);
+            this._reg().setProperty("/wizard/stepsValidated/3", !!sKey);
         },
 
         _validateStep: function () {
             var sSelected = this._reg().getProperty("/paymentTerms/selected");
             var bValid = !!sSelected;
-            this._reg().setProperty("/wizard/stepsValidated/2", bValid);
+            this._reg().setProperty("/wizard/stepsValidated/3", bValid);
             this._missingFields = bValid ? [] : ["Payment Term"];
             return bValid;
         },

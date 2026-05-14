@@ -47,7 +47,7 @@ sap.ui.define([
             }
 
             var bValid = aMissing.length === 0;
-            this._reg().setProperty("/wizard/stepsValidated/4", bValid);
+            this._reg().setProperty("/wizard/stepsValidated/5", bValid);
             this._missingFields = aMissing;
             return bValid;
         },

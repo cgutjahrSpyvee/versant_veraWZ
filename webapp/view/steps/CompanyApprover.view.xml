@@ -1,0 +1,81 @@
+<mvc:View
+    controllerName="vsnt.vera.controller.steps.CompanyApprover"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:core="sap.ui.core">
+
+    <VBox class="sapUiSmallMargin">
+
+        <!-- Company Code Selection -->
+        <f:SimpleForm
+            editable="true"
+            layout="ResponsiveGridLayout"
+            labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+            emptySpanXL="4" emptySpanL="4" emptySpanM="4"
+            columnsXL="1" columnsL="1" columnsM="1">
+            <f:toolbar>
+                <Toolbar>
+                    <Title text="{i18n>companyCodes}" level="H4"/>
+                </Toolbar>
+            </f:toolbar>
+            <f:content>
+                <Label text="{i18n>searchCompanyCode}" required="true"/>
+                <HBox>
+                    <Input
+                        id="companyCodeInput"
+                        placeholder="{i18n>companyCodePlaceholder}"
+                        maxLength="4"
+                        width="10rem"
+                        submit=".onSearchCompanyCodes"/>
+                    <Button
+                        text="{i18n>btnSearch}"
+                        icon="sap-icon://search"
+                        press=".onSearchCompanyCodes"
+                        class="sapUiSmallMarginBegin"/>
+                </HBox>
+
+                <Label text="{i18n>selectedCompanyCodes}"/>
+                <Tokenizer id="companyCodeTokenizer"
+                    tokenDelete=".onCompanyCodeRemove">
+                </Tokenizer>
+
+                <Label text=""/>
+                <MessageStrip
+                    text="{i18n>companyCodeRequired}"
+                    type="Warning"
+                    showIcon="true"
+                    visible="{= ${reg>/ui/companyApproverTouched} &amp;&amp; ${reg>/companyCodes}.length === 0}"/>
+            </f:content>
+        </f:SimpleForm>
+
+        <!-- Approver Selection -->
+        <f:SimpleForm
+            editable="true"
+            layout="ResponsiveGridLayout"
+            labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+            emptySpanXL="4" emptySpanL="4" emptySpanM="4"
+            columnsXL="1" columnsL="1" columnsM="1">
+            <f:toolbar>
+                <Toolbar>
+                    <Title text="{i18n>approverSelection}" level="H4"/>
+                </Toolbar>
+            </f:toolbar>
+            <f:content>
+                <Label text="{i18n>approver}" required="true"/>
+                <Select id="approverSelect"
+                    selectedKey="{reg>/approverSSO}"
+                    enabled="{= ${reg>/companyCodes}.length > 0}"
+                    valueState="{= ${reg>/ui/companyApproverTouched} &amp;&amp; !${reg>/approverSSO} ? 'Error' : 'None'}"
+                    valueStateText="{i18n>approverRequired}"
+                    change=".onApproverChange">
+                    <items>
+                        <core:Item key="" text="{i18n>selectOne}"/>
+                    </items>
+                </Select>
+            </f:content>
+        </f:SimpleForm>
+
+    </VBox>
+
+</mvc:View>

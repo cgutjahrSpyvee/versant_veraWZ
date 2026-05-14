@@ -101,7 +101,7 @@ sap.ui.define([
             if (!oTax.exemptPayeeCode) { aMissing.push("Exempt Payee Code"); }
 
             var bValid = aMissing.length === 0;
-            this._reg().setProperty("/wizard/stepsValidated/1", bValid);
+            this._reg().setProperty("/wizard/stepsValidated/2", bValid);
             this._missingFields = aMissing;
             return bValid;
         },

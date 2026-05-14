@@ -44,8 +44,9 @@ sap.ui.define([
 
         // ── Wizard step completion handlers ──────────────────────────
 
-        onStepBasicComplete:        function () { this._setStepValidated(0, true); },
-        onStepPaymentTermsComplete: function () { this._setStepValidated(2, true); },
+        onStepBasicComplete:            function () { this._setStepValidated(0, true); },
+        onStepCompanyApproverComplete:  function () { this._setStepValidated(1, true); },
+        onStepPaymentTermsComplete:     function () { this._setStepValidated(3, true); },
 
         onStepTaxComplete: function _afterTax() {
             // Reload payment terms when entering the Payment Terms step,
@@ -57,10 +58,10 @@ sap.ui.define([
                     oController.loadPaymentTerms();
                 }
             }
-            this._setStepValidated(1, true);
+            this._setStepValidated(2, true);
         },
-        onStepBankingComplete:      function () { this._setStepValidated(3, true); },
-        onStepContactsComplete:     function () { this._setStepValidated(4, true); },
+        onStepBankingComplete:          function () { this._setStepValidated(4, true); },
+        onStepContactsComplete:         function () { this._setStepValidated(5, true); },
 
         _setStepValidated: function (iIndex, bValid) {
             var aValidated = this._reg().getProperty("/wizard/stepsValidated").slice();
@@ -131,11 +132,12 @@ sap.ui.define([
             var iCurrentIndex = aSteps.indexOf(oCurrentStep);
 
             var aStepConfig = [
-                { viewId: "basicView",        touchedFlag: "/ui/basicTouched" },
-                { viewId: "taxView",          touchedFlag: "/ui/taxTouched" },
-                { viewId: "paymentTermsView", touchedFlag: "/ui/paymentTermsTouched" },
-                { viewId: "bankingView",      touchedFlag: "/ui/bankingTouched" },
-                { viewId: "contactsView",     touchedFlag: "/ui/contactsTouched" }
+                { viewId: "basicView",             touchedFlag: "/ui/basicTouched" },
+                { viewId: "companyApproverView",   touchedFlag: "/ui/companyApproverTouched" },
+                { viewId: "taxView",               touchedFlag: "/ui/taxTouched" },
+                { viewId: "paymentTermsView",      touchedFlag: "/ui/paymentTermsTouched" },
+                { viewId: "bankingView",            touchedFlag: "/ui/bankingTouched" },
+                { viewId: "contactsView",           touchedFlag: "/ui/contactsTouched" }
             ];
 
             if (iCurrentIndex >= 0 && iCurrentIndex < aStepConfig.length) {

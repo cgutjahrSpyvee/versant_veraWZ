@@ -29,9 +29,10 @@
                     </items>
                 </SegmentedButton>
 
-                <Label text="{i18n>bankCountry}" required="true"/>
+                <!-- Bank country - hidden for US-only scope, will be re-enabled for international -->
+                <Label text="{i18n>bankCountry}" required="true" visible="false"/>
                 <Select id="primaryCountry" selectedKey="{reg>/banking/primaryAccount/country}"
-                        change=".onBankingFieldChange">
+                        change=".onBankingFieldChange" visible="false">
                     <items>
                         <core:Item key="US"    text="United States"/>
                         <core:Item key="CA"    text="Canada"/>
@@ -142,8 +143,9 @@
                                 </items>
                             </SegmentedButton>
 
-                            <Label text="{i18n>bankCountry}" required="true"/>
-                            <Select selectedKey="{reg>country}">
+                            <!-- Bank country - hidden for US-only scope -->
+                            <Label text="{i18n>bankCountry}" required="true" visible="false"/>
+                            <Select selectedKey="{reg>country}" visible="false">
                                 <items>
                                     <core:Item key="US"    text="United States"/>
                                     <core:Item key="CA"    text="Canada"/>
