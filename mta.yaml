@@ -1,6 +1,6 @@
 _schema-version: "3.2"
 ID: vera-fiori
-description: VeRA Vendor Registration Application
+description: Versant Vendor Workzone
 version: 1.0.0
 modules:
 - name: vera-fiori-approuter

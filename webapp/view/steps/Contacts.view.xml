@@ -22,7 +22,14 @@
                 text="{i18n>contactsHint}"
                 type="Information"
                 showIcon="true"
-                visible="{= ${reg>/contacts/items}.length === 0}"
+                visible="{= !${reg>/ui/contactsTouched} &amp;&amp; ${reg>/contacts/items}.length === 0}"
+                class="sapUiSmallMargin"/>
+
+            <MessageStrip
+                text="At least one contact is required"
+                type="Error"
+                showIcon="true"
+                visible="{= ${reg>/ui/contactsTouched} &amp;&amp; ${reg>/contacts/items}.length === 0}"
                 class="sapUiSmallMargin"/>
 
             <List
@@ -48,9 +55,13 @@
 
                         <f:content>
                             <Label text="{i18n>name}" required="true"/>
-                            <Input value="{reg>name}" liveChange=".onContactFieldChange"/>
+                            <Input value="{reg>name}" liveChange=".onContactFieldChange"
+                                   valueState="{= ${reg>/ui/contactsTouched} &amp;&amp; !${reg>name} ? 'Error' : 'None'}"
+                                   valueStateText="Contact name is required"/>
                             <Label text="{i18n>emailAddress}" required="true"/>
-                            <Input value="{reg>email}" type="Email" liveChange=".onContactFieldChange"/>
+                            <Input value="{reg>email}" type="Email" liveChange=".onContactFieldChange"
+                                   valueState="{= ${reg>/ui/contactsTouched} &amp;&amp; !${reg>email} ? 'Error' : 'None'}"
+                                   valueStateText="Valid email address is required"/>
                             <Label text="{i18n>phoneNumber}"/>
                             <Input value="{reg>phone}" type="Tel"/>
                             <Label text="{i18n>faxNumber}"/>

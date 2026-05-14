@@ -45,8 +45,20 @@ sap.ui.define([
         // ── Wizard step completion handlers ──────────────────────────
 
         onStepBasicComplete:        function () { this._setStepValidated(0, true); },
-        onStepTaxComplete:          function () { this._setStepValidated(1, true); },
         onStepPaymentTermsComplete: function () { this._setStepValidated(2, true); },
+
+        onStepTaxComplete: function _afterTax() {
+            // Reload payment terms when entering the Payment Terms step,
+            // since vendor type is now known from the Basic step
+            var oPaymentTermsView = this.byId("paymentTermsView");
+            if (oPaymentTermsView) {
+                var oController = oPaymentTermsView.getController();
+                if (oController && oController.loadPaymentTerms) {
+                    oController.loadPaymentTerms();
+                }
+            }
+            this._setStepValidated(1, true);
+        },
         onStepBankingComplete:      function () { this._setStepValidated(3, true); },
         onStepContactsComplete:     function () { this._setStepValidated(4, true); },
 
@@ -112,9 +124,48 @@ sap.ui.define([
 
         onNextStep: function () {
             var oWizard = this.byId("veraWizard");
-            if (oWizard) {
-                oWizard.nextStep();
+            if (!oWizard) { return; }
+
+            var aSteps = oWizard.getSteps();
+            var oCurrentStep = oWizard.getProgressStep();
+            var iCurrentIndex = aSteps.indexOf(oCurrentStep);
+
+            var aStepConfig = [
+                { viewId: "basicView",        touchedFlag: "/ui/basicTouched" },
+                { viewId: "taxView",          touchedFlag: "/ui/taxTouched" },
+                { viewId: "paymentTermsView", touchedFlag: "/ui/paymentTermsTouched" },
+                { viewId: "bankingView",      touchedFlag: "/ui/bankingTouched" },
+                { viewId: "contactsView",     touchedFlag: "/ui/contactsTouched" }
+            ];
+
+            if (iCurrentIndex >= 0 && iCurrentIndex < aStepConfig.length) {
+                var oConfig = aStepConfig[iCurrentIndex];
+                this._reg().setProperty(oConfig.touchedFlag, true);
+
+                var oSubView = this.byId(oConfig.viewId);
+                if (oSubView) {
+                    var oStepController = oSubView.getController();
+                    if (oStepController && oStepController._validateStep) {
+                        var bValid = oStepController._validateStep();
+                        if (!bValid) {
+                            var aMissing = oStepController.getMissingFields
+                                ? oStepController.getMissingFields() : [];
+                            var sMsg = this._i18n("completeRequiredFields");
+                            if (aMissing.length > 0) {
+                                sMsg += "\n\n" + aMissing.map(function (s) {
+                                    return "\u2022 " + s;
+                                }).join("\n");
+                            }
+                            MessageBox.warning(sMsg, {
+                                title: this._i18n("validationErrorTitle")
+                            });
+                            return;
+                        }
+                    }
+                }
             }
+
+            oWizard.nextStep();
         },
 
         // ── Save for Later ───────────────────────────────────────────

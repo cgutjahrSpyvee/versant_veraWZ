@@ -31,12 +31,29 @@ sap.ui.define([
 
         _validateStep: function () {
             var aContacts = this._reg().getProperty("/contacts/items");
-            var bValid = aContacts.length > 0 &&
-                aContacts.every(function (c) {
-                    return !!c.name && !!c.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email);
+            var aMissing = [];
+
+            if (aContacts.length === 0) {
+                aMissing.push("At least one contact");
+            } else {
+                aContacts.forEach(function (c, i) {
+                    var sLabel = c.name || ("Contact " + (i + 1));
+                    if (!c.name)  { aMissing.push(sLabel + " — Name"); }
+                    if (!c.email) { aMissing.push(sLabel + " — Email"); }
+                    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)) {
+                        aMissing.push(sLabel + " — Valid Email");
+                    }
                 });
+            }
+
+            var bValid = aMissing.length === 0;
             this._reg().setProperty("/wizard/stepsValidated/4", bValid);
+            this._missingFields = aMissing;
             return bValid;
+        },
+
+        getMissingFields: function () {
+            return this._missingFields || [];
         }
     });
 });

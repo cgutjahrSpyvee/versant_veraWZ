@@ -17,6 +17,13 @@
       "csrfProtection": false
     },
     {
+      "source": "^/irj/go/km/docs/(.*)",
+      "target": "/irj/go/km/docs/$1",
+      "destination": "VeRA_Backend",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
+    },
+    {
       "source": "^/resources/(.*)$",
       "target": "/resources/$1",
       "authenticationType": "none",

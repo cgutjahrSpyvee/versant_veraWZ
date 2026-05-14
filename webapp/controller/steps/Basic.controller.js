@@ -11,14 +11,20 @@ sap.ui.define([
             this.getOwnerComponent().getService().getCountries()
                 .done(function (aCountries) {
                     that._reg().setProperty("/ui/countries", aCountries || []);
+                })
+                .fail(function () {
+                    sap.base.Log.error("VeRA: Failed to load countries data");
                 });
-            
+
             // Load all region data for filtering
             this.getOwnerComponent().getService().getAllRegionData()
                 .done(function (aAllRegions) {
                     that._reg().setProperty("/ui/allRegions", aAllRegions || []);
                     // Initialize regions based on current country selection
                     that._filterRegionsByCountry();
+                })
+                .fail(function () {
+                    sap.base.Log.error("VeRA: Failed to load region data");
                 });
         },
 
@@ -100,13 +106,26 @@ sap.ui.define([
         _validateStep: function () {
             var oBasic = this._reg().getProperty("/basic");
             var oAddr  = oBasic.primaryAddress;
-            var bValid =
-                !!oBasic.legalName &&
-                !!oAddr.country && !!oAddr.address1 &&
-                !!oAddr.city && !!oAddr.state && !!oAddr.zip &&
-                (!oBasic.acceptPO || !!oBasic.poEmail);
+            var sVendorType = this._reg().getProperty("/vendorType");
+
+            var aMissing = [];
+            if (!oBasic.legalName) { aMissing.push("Legal Name"); }
+            if (!sVendorType)      { aMissing.push("Vendor Type"); }
+            if (!oAddr.country)    { aMissing.push("Country"); }
+            if (!oAddr.address1)   { aMissing.push("Address Line 1"); }
+            if (!oAddr.city)       { aMissing.push("City"); }
+            if (!oAddr.state)      { aMissing.push("State"); }
+            if (!oAddr.zip)        { aMissing.push("Zip Code"); }
+            if (oBasic.acceptPO && !oBasic.poEmail) { aMissing.push("PO Email Address"); }
+
+            var bValid = aMissing.length === 0;
             this._reg().setProperty("/wizard/stepsValidated/0", bValid);
+            this._missingFields = aMissing;
             return bValid;
+        },
+
+        getMissingFields: function () {
+            return this._missingFields || [];
         }
     });
 });

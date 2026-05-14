@@ -1,7 +1,7 @@
 {
   "name": "vera-fiori-approuter",
   "version": "1.0.0",
-  "description": "Standalone approuter for VeRA Fiori app",
+  "description": "Standalone approuter for Versant Vendor Workzone Fiori app",
   "dependencies": {
     "@sap/approuter": "^16"
   },

@@ -82,15 +82,21 @@ sap.ui.define([
 
         _validateStep: function () {
             var oP = this._reg().getProperty("/banking/primaryAccount");
-            var bValid;
-            if (oP.method === "Check") {
-                bValid = !!oP.bankDocId;
-            } else {
-                bValid = !!oP.routingNum && !!oP.accountNum &&
-                         !!oP.holderName && !!oP.bankDocId;
+            var aMissing = [];
+            if (oP.method !== "Check") {
+                if (!oP.routingNum)  { aMissing.push("Routing Number"); }
+                if (!oP.accountNum)  { aMissing.push("Account Number"); }
+                if (!oP.holderName)  { aMissing.push("Account Holder Name"); }
+                // if (!oP.bankDocId) { aMissing.push("Bank Details Form"); }
             }
+            var bValid = aMissing.length === 0;
             this._reg().setProperty("/wizard/stepsValidated/3", bValid);
+            this._missingFields = aMissing;
             return bValid;
+        },
+
+        getMissingFields: function () {
+            return this._missingFields || [];
         }
     });
 });

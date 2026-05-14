@@ -48,6 +48,8 @@
                 <Input
                     id="primaryRouting"
                     value="{reg>/banking/primaryAccount/routingNum}"
+                    valueState="{= ${reg>/ui/bankingTouched} &amp;&amp; ${reg>/banking/primaryAccount/method} !== 'Check' &amp;&amp; !${reg>/banking/primaryAccount/routingNum} ? 'Error' : 'None'}"
+                    valueStateText="Routing Number is required"
                     maxLength="9"
                     visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
                     liveChange=".onBankingFieldChange"/>
@@ -57,6 +59,8 @@
                 <Input
                     id="primaryAccountNum"
                     value="{reg>/banking/primaryAccount/accountNum}"
+                    valueState="{= ${reg>/ui/bankingTouched} &amp;&amp; ${reg>/banking/primaryAccount/method} !== 'Check' &amp;&amp; !${reg>/banking/primaryAccount/accountNum} ? 'Error' : 'None'}"
+                    valueStateText="Account Number is required"
                     maxLength="17"
                     visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
                     liveChange=".onBankingFieldChange"/>
@@ -66,10 +70,12 @@
                 <Input
                     id="primaryHolderName"
                     value="{reg>/banking/primaryAccount/holderName}"
+                    valueState="{= ${reg>/ui/bankingTouched} &amp;&amp; ${reg>/banking/primaryAccount/method} !== 'Check' &amp;&amp; !${reg>/banking/primaryAccount/holderName} ? 'Error' : 'None'}"
+                    valueStateText="Account Holder Name is required"
                     visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
                     liveChange=".onBankingFieldChange"/>
 
-                <Label text="{i18n>uploadBankDetailsForm}" required="true"/>
+                <Label text="{i18n>uploadBankDetailsForm}"/>
                 <HBox alignItems="Center">
                     <u:FileUploader
                         id="primaryBankFileUploader"
@@ -89,9 +95,8 @@
                 <Label text=""/>
                 <Link
                     text="{i18n>downloadBlankForm}"
-                    href="/irj/go/km/docs/nbcu_km/Vendor%20Portal/Documents/NBCU%20Global%20Vendor%20Bank%20Detail%20Form.xlsx"
-                    target="_blank"
-                    icon="sap-icon://download"/>
+                    href="assets/GlobalVendorBankDetailForm.xlsx"
+                    target="_blank"/>
             </f:content>
         </f:SimpleForm>
 

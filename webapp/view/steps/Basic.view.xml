@@ -18,7 +18,9 @@
 
             <f:content>
                 <Label text="{i18n>legalName}" required="true"/>
-                <Input id="legalName" value="{reg>/basic/legalName}" liveChange=".onBasicFieldChange"/>
+                <Input id="legalName" value="{reg>/basic/legalName}" liveChange=".onBasicFieldChange"
+                       valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/legalName} ? 'Error' : 'None'}"
+                       valueStateText="Legal Name is required"/>
 
                 <Label text="{i18n>invoicingName}"/>
                 <Input id="invoicingName" value="{reg>/basic/invoicingName}" liveChange=".onBasicFieldChange"/>
@@ -35,11 +37,24 @@
 
             <f:content>
                 <Label text="Vendor Type" required="true"/>
-                <Select id="vendorType" selectedKey="{reg>/vendorType}" change=".onVendorTypeChange">
-                    <core:Item key="" text="Select Vendor Type"/>
-                    <core:Item key="GOODS" text="Goods"/>
-                    <core:Item key="SERVICES" text="Services"/>
-                    <core:Item key="BOTH" text="Both"/>
+                <Select id="vendorType" selectedKey="{reg>/vendorType}" change=".onVendorTypeChange"
+                        valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/vendorType} ? 'Error' : 'None'}"
+                        valueStateText="Vendor Type is required">
+                    <core:Item key=""    text="Select Vendor Type"/>
+                    <core:Item key="010" text="Trade Vendor"/>
+                    <core:Item key="018" text="Production/Agreement"/>
+                    <core:Item key="020" text="Freelancer/Talent/Statistician"/>
+                    <core:Item key="030" text="Charitable"/>
+                    <core:Item key="040" text="Political Contribution"/>
+                    <core:Item key="050" text="Government"/>
+                    <core:Item key="060" text="One Time - Refund/Reimbursement"/>
+                    <core:Item key="093" text="One Time - Legal Settlement"/>
+                    <core:Item key="094" text="One Time - Contest Winner"/>
+                    <core:Item key="095" text="One Time - Posthumous Payments"/>
+                    <core:Item key="080" text="Utility"/>
+                    <core:Item key="090" text="Comcast"/>
+                    <core:Item key="091" text="Revenue Share"/>
+                    <core:Item key="092" text="Garnishment"/>
                 </Select>
 
                 <Label text="{i18n>acceptPO}"/>
@@ -47,7 +62,9 @@
 
                 <Label text="{i18n>poEmailPlaceholder}" required="true" visible="{reg>/basic/acceptPO}"/>
                 <Input id="poEmail" value="{reg>/basic/poEmail}" type="Email"
-                       visible="{reg>/basic/acceptPO}" liveChange=".onBasicFieldChange"/>
+                       visible="{reg>/basic/acceptPO}" liveChange=".onBasicFieldChange"
+                       valueState="{= ${reg>/ui/basicTouched} &amp;&amp; ${reg>/basic/acceptPO} &amp;&amp; !${reg>/basic/poEmail} ? 'Error' : 'None'}"
+                       valueStateText="PO Email is required when accepting purchase orders"/>
             </f:content>
         </f:SimpleForm>
 
@@ -62,12 +79,17 @@
             <f:content>
                 <Label text="{i18n>country}" required="true"/>
                 <Select id="country" selectedKey="{reg>/basic/primaryAddress/country}"
+                        forceSelection="false"
+                        valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/country} ? 'Error' : 'None'}"
+                        valueStateText="Country is required"
                         items="{reg>/ui/countries}" change=".onCountryChange">
                     <core:ListItem key="{reg>country}" text="{reg>description}"/>
                 </Select>
 
                 <Label text="{i18n>address1}" required="true"/>
-                <Input id="address1" value="{reg>/basic/primaryAddress/address1}" liveChange=".onBasicFieldChange"/>
+                <Input id="address1" value="{reg>/basic/primaryAddress/address1}" liveChange=".onBasicFieldChange"
+                       valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/address1} ? 'Error' : 'None'}"
+                       valueStateText="Address Line 1 is required"/>
 
                 <Label text="{i18n>address2}"/>
                 <Input id="address2" value="{reg>/basic/primaryAddress/address2}" liveChange=".onBasicFieldChange"/>
@@ -76,17 +98,24 @@
                 <Input id="address3" value="{reg>/basic/primaryAddress/address3}" liveChange=".onBasicFieldChange"/>
 
                 <Label text="{i18n>city}" required="true"/>
-                <Input id="city" value="{reg>/basic/primaryAddress/city}" liveChange=".onBasicFieldChange"/>
+                <Input id="city" value="{reg>/basic/primaryAddress/city}" liveChange=".onBasicFieldChange"
+                       valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/city} ? 'Error' : 'None'}"
+                       valueStateText="City is required"/>
 
                 <Label text="{i18n>state}" required="true"/>
                 <Select id="state" selectedKey="{reg>/basic/primaryAddress/state}"
+                        forceSelection="false"
+                        valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/state} ? 'Error' : 'None'}"
+                        valueStateText="State is required"
                         items="{reg>/ui/regions}" change=".onBasicFieldChange">
                     <core:ListItem key="{reg>region}" text="{reg>description}"/>
                 </Select>
 
                 <Label text="{i18n>zipCode}" required="true"/>
                 <Input id="zip" value="{reg>/basic/primaryAddress/zip}"
-                       liveChange=".onBasicFieldChange" change=".onZipChange"/>
+                       liveChange=".onBasicFieldChange" change=".onZipChange"
+                       valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/zip} ? 'Error' : 'None'}"
+                       valueStateText="Zip Code is required"/>
             </f:content>
         </f:SimpleForm>
 

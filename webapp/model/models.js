@@ -33,7 +33,12 @@ sap.ui.define([
                     countries:                  [],
                     regions:                    [],
                     newNotificationEmail:       "",
-                    notificationEmailError:     false
+                    notificationEmailError:     false,
+                    basicTouched:               false,
+                    taxTouched:                 false,
+                    paymentTermsTouched:        false,
+                    bankingTouched:             false,
+                    contactsTouched:            false
                 },
 
                 wizard: {
@@ -46,7 +51,7 @@ sap.ui.define([
                     acceptPO:            false,
                     poEmail:             "",
                     primaryAddress: {
-                        country:          "US",
+                        country:          "",
                         address1:         "",
                         address2:         "",
                         address3:         "",

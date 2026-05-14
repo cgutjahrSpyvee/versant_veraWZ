@@ -52,7 +52,7 @@
             columnsXL="1" columnsL="1" columnsM="1">
 
             <f:content>
-                <Label text="{i18n>uploadW9Label}" required="true"/>
+                <Label text="{i18n>uploadW9Label}"/>
                 <HBox alignItems="Center">
                     <u:FileUploader
                         id="w9Uploader"
@@ -73,9 +73,8 @@
                 <Label text=""/>
                 <Link
                     text="{i18n>downloadBlankW9}"
-                    href="/irj/go/km/docs/nbcu_km/Vendor%20Portal/Documents/W9_Blank.pdf"
-                    target="_blank"
-                    icon="sap-icon://download"/>
+                    href="assets/W9.pdf"
+                    target="_blank"/>
             </f:content>
         </f:SimpleForm>
 
@@ -97,7 +96,7 @@
             visible="{= !${reg>/tax/isUSPerson}}">
 
             <f:content>
-                <Label text="{i18n>upload590}" required="true"/>
+                <Label text="{i18n>upload590}"/>
                 <HBox alignItems="Center">
                     <u:FileUploader
                         id="uploader590"
@@ -118,7 +117,7 @@
                 <Label text=""/>
                 <Link
                     text="{i18n>downloadBlank590}"
-                    href="/irj/go/km/docs/nbcu_km/Vendor%20Portal/Documents/590_Blank.pdf"
+                    href="/irj/go/km/docs/vsnt_km/Vendor%20Portal/Documents/590_Blank.pdf"
                     target="_blank"
                     icon="sap-icon://download"/>
             </f:content>
@@ -148,6 +147,8 @@
                 <Input
                     id="taxIdNumber"
                     value="{reg>/tax/taxIdNumber}"
+                    valueState="{= ${reg>/ui/taxTouched} &amp;&amp; !${reg>/tax/taxIdNumber} ? 'Error' : 'None'}"
+                    valueStateText="Tax ID is required"
                     maxLength="10"
                     visible="{= ${reg>/tax/taxCategory} === 'TaxID'}"
                     liveChange=".onTaxFieldChange"
@@ -158,6 +159,8 @@
                 <Input
                     id="ssnNumber"
                     value="{reg>/tax/ssnNumber}"
+                    valueState="{= ${reg>/ui/taxTouched} &amp;&amp; !${reg>/tax/ssnNumber} ? 'Error' : 'None'}"
+                    valueStateText="SSN is required"
                     maxLength="11"
                     type="Password"
                     visible="{= ${reg>/tax/taxCategory} === 'SSN'}"
@@ -165,33 +168,36 @@
 
                 <Label text="{i18n>recipientType}" required="true"/>
                 <Select id="recipientType" selectedKey="{reg>/tax/recipientType}"
+                        valueState="{= ${reg>/ui/taxTouched} &amp;&amp; !${reg>/tax/recipientType} ? 'Error' : 'None'}"
+                        valueStateText="Recipient Type is required"
                         change=".onTaxFieldChange">
                     <items>
-                        <core:Item key=""      text="{i18n>selectOne}"/>
-                        <core:Item key="IND"   text="Individual/Sole Proprietor"/>
-                        <core:Item key="CCORP" text="C Corporation"/>
-                        <core:Item key="SCORP" text="S Corporation"/>
-                        <core:Item key="PART"  text="Partnership"/>
-                        <core:Item key="TRUST" text="Trust/Estate"/>
-                        <core:Item key="LLC_C" text="LLC - C Corporation"/>
-                        <core:Item key="LLC_S" text="LLC - S Corporation"/>
-                        <core:Item key="LLC_P" text="LLC - Partnership"/>
-                        <core:Item key="OTHER" text="Other"/>
+                        <core:Item key=""   text="{i18n>selectOne}"/>
+                        <core:Item key="01" text="Individual / Sole Proprietor"/>
+                        <core:Item key="02" text="C Corporation"/>
+                        <core:Item key="03" text="S Corporation"/>
+                        <core:Item key="04" text="Partnership"/>
+                        <core:Item key="05" text="Trust / Estate"/>
+                        <core:Item key="06" text="Limited Liability Company"/>
+                        <core:Item key="07" text="Other"/>
                     </items>
                 </Select>
 
                 <Label text="{i18n>exemptPayeeCode}" required="true"/>
                 <Select id="exemptPayee" selectedKey="{reg>/tax/exemptPayeeCode}"
+                        valueState="{= ${reg>/ui/taxTouched} &amp;&amp; !${reg>/tax/exemptPayeeCode} ? 'Error' : 'None'}"
+                        valueStateText="Exempt Payee Code is required"
                         change=".onTaxFieldChange">
                     <items>
-                        <core:Item key=""  text="{i18n>selectOne}"/>
-                        <core:Item key="1" text="{i18n>exempt1}"/>
-                        <core:Item key="2" text="{i18n>exempt2}"/>
-                        <core:Item key="3" text="{i18n>exempt3}"/>
-                        <core:Item key="4" text="{i18n>exempt4}"/>
-                        <core:Item key="5" text="5 - A corporation"/>
-                        <core:Item key="6" text="6 - Dealer in securities or commodities"/>
-                        <core:Item key="7" text="7 - Futures commission merchant"/>
+                        <core:Item key=""   text="{i18n>selectOne}"/>
+                        <core:Item key="NA" text="Not Applicable"/>
+                        <core:Item key="1"  text="{i18n>exempt1}"/>
+                        <core:Item key="2"  text="{i18n>exempt2}"/>
+                        <core:Item key="3"  text="{i18n>exempt3}"/>
+                        <core:Item key="4"  text="{i18n>exempt4}"/>
+                        <core:Item key="5"  text="5 - A corporation"/>
+                        <core:Item key="6"  text="6 - Dealer in securities or commodities"/>
+                        <core:Item key="7"  text="7 - Futures commission merchant"/>
                     </items>
                 </Select>
             </f:content>

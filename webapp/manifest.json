@@ -3,8 +3,8 @@
   "sap.app": {
     "id": "vsnt.vera",
     "type": "application",
-    "title": "VeRA - Vendor Registration Application",
-    "description": "Vendor Registration and Maintenance Portal",
+    "title": "Versant Vendor Workzone - Vendor Registration Application",
+    "description": "Versant Vendor Workzone",
     "applicationVersion": { "version": "1.0.0" },
     "sourceTemplate": {
       "id": "@sap/generator-fiori:basic",

@@ -1,4 +1,4 @@
-# VeRA - Vendor Registration Application
+# Versant Vendor Workzone - Vendor Registration Application
 
 SAPUI5 Fiori application for vendor registration and maintenance, deployed to SAP BTP Cloud Foundry and served via SAP Build Work Zone.
 

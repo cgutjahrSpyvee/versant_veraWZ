@@ -78,7 +78,7 @@ sap.ui.define([
         onTaxIdBlur: function () {
             var sTaxId    = this._reg().getProperty("/tax/taxIdNumber");
             var sVendorId = this._reg().getProperty("/vendorId");
-            if (!sTaxId || sTaxId.length < 9) { return; }
+            if (!sTaxId) { return; }
             this._svc().validateTaxId(sTaxId, sVendorId)
                 .done(function (oResult) {
                     if (oResult && oResult.returnStatus === "1") {
@@ -88,15 +88,26 @@ sap.ui.define([
         },
 
         _validateStep: function () {
+            // Mark as touched so view shows inline error states
+            this._reg().setProperty("/ui/taxTouched", true);
+
             var oTax = this._reg().getProperty("/tax");
-            var bValid =
-                !!oTax.w9DocId &&
-                (oTax.isUSPerson || !!oTax.doc590Id) &&
-                (oTax.taxCategory === "TaxID" ? !!oTax.taxIdNumber : !!oTax.ssnNumber) &&
-                !!oTax.recipientType &&
-                !!oTax.exemptPayeeCode;
+            var aMissing = [];
+            // if (!oTax.w9DocId) { aMissing.push("W-9 Form"); }
+            // if (!oTax.isUSPerson && !oTax.doc590Id) { aMissing.push("Form 590"); }
+            if (oTax.taxCategory === "TaxID" && (!oTax.taxIdNumber || oTax.taxIdNumber.length < 9)) { aMissing.push("Tax ID Number (9 digits)"); }
+            if (oTax.taxCategory === "SSN" && (!oTax.ssnNumber || oTax.ssnNumber.length < 9))     { aMissing.push("Social Security Number (9 digits)"); }
+            if (!oTax.recipientType)   { aMissing.push("Federal Tax Classification"); }
+            if (!oTax.exemptPayeeCode) { aMissing.push("Exempt Payee Code"); }
+
+            var bValid = aMissing.length === 0;
             this._reg().setProperty("/wizard/stepsValidated/1", bValid);
+            this._missingFields = aMissing;
             return bValid;
+        },
+
+        getMissingFields: function () {
+            return this._missingFields || [];
         }
     });
 });

@@ -1,38 +1,59 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller"
-], function (Controller) {
+    "sap/ui/core/mvc/Controller",
+    "sap/base/Log"
+], function (Controller, Log) {
     "use strict";
 
     return Controller.extend("vsnt.vera.controller.steps.PaymentTerms", {
 
-        onInit: function () {
-            var that = this;
-            var oReg = this.getOwnerComponent().getModel("reg");
-            var sVendorType = oReg.getProperty("/vendorType");
+        _lastVendorType: null,
 
-            this.getOwnerComponent().getService().getPaymentTerms(sVendorType)
-                .done(function (aTerms) {
-                    oReg.setProperty("/paymentTerms/availableTerms", aTerms || []);
-                });
+        onInit: function () {
+            this._loadPaymentTerms();
         },
 
         _reg: function () { return this.getOwnerComponent().getModel("reg"); },
 
-        onPaymentTermSelect: function (oEvent) {
-            var oItem = oEvent.getParameter("listItem");
-            if (!oItem) { return; }
+        loadPaymentTerms: function () {
+            this._loadPaymentTerms();
+        },
 
-            var aData = oItem.getCustomData();
-            var sKey  = "";
-            for (var i = 0; i < aData.length; i++) {
-                if (aData[i].getKey() === "termKey") {
-                    sKey = aData[i].getValue();
-                    break;
-                }
+        _loadPaymentTerms: function () {
+            var oReg = this.getOwnerComponent().getModel("reg");
+            var sVendorType = oReg.getProperty("/vendorType") || "";
+
+            var aExisting = oReg.getProperty("/paymentTerms/availableTerms") || [];
+            if (sVendorType === this._lastVendorType && aExisting.length > 0) {
+                return;
             }
+            this._lastVendorType = sVendorType;
 
+            this.getOwnerComponent().getService().getPaymentTerms(sVendorType)
+                .done(function (aTerms) {
+                    oReg.setProperty("/paymentTerms/availableTerms", aTerms || []);
+                })
+                .fail(function () {
+                    Log.error("VeRA: Failed to load payment terms");
+                    oReg.setProperty("/paymentTerms/availableTerms", []);
+                });
+        },
+
+        onPaymentTermSelect: function (oEvent) {
+            var sKey = oEvent.getParameter("selectedItem").getKey();
             this._reg().setProperty("/paymentTerms/selected", sKey);
             this._reg().setProperty("/wizard/stepsValidated/2", !!sKey);
+        },
+
+        _validateStep: function () {
+            var sSelected = this._reg().getProperty("/paymentTerms/selected");
+            var bValid = !!sSelected;
+            this._reg().setProperty("/wizard/stepsValidated/2", bValid);
+            this._missingFields = bValid ? [] : ["Payment Term"];
+            return bValid;
+        },
+
+        getMissingFields: function () {
+            return this._missingFields || [];
         }
     });
 });
