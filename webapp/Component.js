@@ -30,6 +30,7 @@ sap.ui.define([
 
             this._setShellTitle("VeRA — Vendor Registration");
             this._initFLPNavigation();
+            this._handleIntentNavigation();
         },
 
         getService: function () {
@@ -45,6 +46,28 @@ sap.ui.define([
                 }
             } catch (e) {
                 /* outside FLP — ignore */
+            }
+        },
+
+        _handleIntentNavigation: function () {
+            try {
+                var oComponentData = this.getComponentData();
+                var oStartupParams = oComponentData && oComponentData.startupParameters || {};
+                var oParsed = sap.ushell && sap.ushell.Container &&
+                    sap.ushell.Container.getService("URLParsing").parseShellHash(
+                        window.location.hash
+                    );
+                var sAction = oParsed && oParsed.action;
+
+                if (sAction === "register") {
+                    var sMode = oStartupParams.mode ? oStartupParams.mode[0] : "register";
+                    this.getRouter().navTo("register", { mode: sMode });
+                } else if (sAction === "status") {
+                    this.getRouter().navTo("status");
+                }
+                // "maintain" and other actions stay on home for now
+            } catch (e) {
+                /* outside FLP — no intent routing */
             }
         },
 
