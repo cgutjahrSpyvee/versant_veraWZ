@@ -74,8 +74,8 @@
 
                 <Label text=""/>
                 <Link
+                    id="w9DownloadLink"
                     text="{i18n>downloadBlankW9}"
-                    href="assets/W9.pdf"
                     target="_blank"/>
             </f:content>
         </f:SimpleForm>

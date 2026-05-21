@@ -62,12 +62,11 @@
                 </Toolbar>
             </f:toolbar>
             <f:content>
-                <Label text="{i18n>approver}" required="true"/>
+                <!-- TODO: set required="true" and restore valueState when approver is required again -->
+                <Label text="{i18n>approver}"/>
                 <Select id="approverSelect"
                     selectedKey="{reg>/approverSSO}"
                     enabled="{= ${reg>/companyCodes}.length > 0}"
-                    valueState="{= ${reg>/ui/companyApproverTouched} &amp;&amp; !${reg>/approverSSO} ? 'Error' : 'None'}"
-                    valueStateText="{i18n>approverRequired}"
                     change=".onApproverChange">
                     <items>
                         <core:Item key="" text="{i18n>selectOne}"/>

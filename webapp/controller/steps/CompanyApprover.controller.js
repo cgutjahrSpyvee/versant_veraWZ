@@ -91,10 +91,12 @@ sap.ui.define([
         onCompanyCodeRemove: function (oEvent) {
             var aRemovedTokens = oEvent.getParameter("tokens");
             var aCodes = this._reg().getProperty("/companyCodes").slice();
+            var oTokenizer = this.byId("companyCodeTokenizer");
 
             aRemovedTokens.forEach(function (oToken) {
                 var iIdx = aCodes.indexOf(oToken.getKey());
                 if (iIdx > -1) { aCodes.splice(iIdx, 1); }
+                oTokenizer.removeToken(oToken);
             });
 
             this._reg().setProperty("/companyCodes", aCodes);
@@ -151,7 +153,8 @@ sap.ui.define([
             var aMissing = [];
 
             if (!aCodes || aCodes.length === 0) { aMissing.push("Company Code"); }
-            if (!sApprover) { aMissing.push("Approver"); }
+            // TODO: re-enable approver requirement
+            // if (!sApprover) { aMissing.push("Approver"); }
 
             var bValid = aMissing.length === 0;
             this._reg().setProperty("/wizard/stepsValidated/1", bValid);

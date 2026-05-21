@@ -95,8 +95,8 @@
 
                 <Label text=""/>
                 <Link
+                    id="bankFormDownloadLink"
                     text="{i18n>downloadBlankForm}"
-                    href="assets/GlobalVendorBankDetailForm.xlsx"
                     target="_blank"/>
             </f:content>
         </f:SimpleForm>

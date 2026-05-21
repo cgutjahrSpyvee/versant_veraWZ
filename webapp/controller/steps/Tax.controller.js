@@ -7,7 +7,10 @@ sap.ui.define([
 
     return Controller.extend("vsnt.vera.controller.steps.Tax", {
 
-        onInit: function () {},
+        onInit: function () {
+            var sW9Url = sap.ui.require.toUrl("vsnt/vera/assets/W9.pdf");
+            this.byId("w9DownloadLink").setHref(sW9Url);
+        },
 
         _svc: function () { return this.getOwnerComponent().getService(); },
         _reg: function () { return this.getOwnerComponent().getModel("reg"); },

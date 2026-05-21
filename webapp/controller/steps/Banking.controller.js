@@ -7,7 +7,10 @@ sap.ui.define([
 
     return Controller.extend("vsnt.vera.controller.steps.Banking", {
 
-        onInit: function () {},
+        onInit: function () {
+            var sBankFormUrl = sap.ui.require.toUrl("vsnt/vera/assets/Global Vendor Bank Detail Form.xlsx");
+            this.byId("bankFormDownloadLink").setHref(sBankFormUrl);
+        },
 
         _svc: function () { return this.getOwnerComponent().getService(); },
         _reg: function () { return this.getOwnerComponent().getModel("reg"); },
