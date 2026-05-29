@@ -29,6 +29,7 @@
                     <mvc:XMLView id="basicView" viewName="vsnt.vera.view.steps.Basic"/>
                 </WizardStep>
 
+                <!-- TODO: re-enable Company/Approver step
                 <WizardStep
                     id="stepCompanyApprover"
                     title="{i18n>tabCompanyApprover}"
@@ -37,6 +38,7 @@
                     complete=".onStepCompanyApproverComplete">
                     <mvc:XMLView id="companyApproverView" viewName="vsnt.vera.view.steps.CompanyApprover"/>
                 </WizardStep>
+                -->
 
                 <WizardStep
                     id="stepTax"
@@ -47,6 +49,7 @@
                     <mvc:XMLView id="taxView" viewName="vsnt.vera.view.steps.Tax"/>
                 </WizardStep>
 
+                <!-- TODO: re-enable Payment Terms step
                 <WizardStep
                     id="stepPaymentTerms"
                     title="{i18n>tabPaymentTerms}"
@@ -55,6 +58,7 @@
                     complete=".onStepPaymentTermsComplete">
                     <mvc:XMLView id="paymentTermsView" viewName="vsnt.vera.view.steps.PaymentTerms"/>
                 </WizardStep>
+                -->
 
                 <WizardStep
                     id="stepBanking"

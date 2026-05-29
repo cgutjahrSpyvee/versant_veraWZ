@@ -21,7 +21,11 @@ sap.ui.define([
             UIComponent.prototype.init.apply(this, arguments);
 
             this.setModel(models.createDeviceModel(), "device");
-            this.setModel(models.createRegistrationModel(), "reg");
+            var oRegModel = models.createRegistrationModel();
+            // TODO: remove these when steps are re-enabled
+            oRegModel.setProperty("/wizard/stepsValidated/1", true);  // Company/Approver
+            oRegModel.setProperty("/wizard/stepsValidated/3", true);  // Payment Terms
+            this.setModel(oRegModel, "reg");
             this.setModel(models.createInboxModel(), "inbox");
 
             this._veraService = VeRAService.getInstance();

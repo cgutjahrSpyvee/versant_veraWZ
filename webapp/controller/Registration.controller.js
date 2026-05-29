@@ -133,9 +133,11 @@ sap.ui.define([
 
             var aStepConfig = [
                 { viewId: "basicView",             touchedFlag: "/ui/basicTouched" },
-                { viewId: "companyApproverView",   touchedFlag: "/ui/companyApproverTouched" },
+                // TODO: re-enable when Company/Approver step is restored
+                // { viewId: "companyApproverView",   touchedFlag: "/ui/companyApproverTouched" },
                 { viewId: "taxView",               touchedFlag: "/ui/taxTouched" },
-                { viewId: "paymentTermsView",      touchedFlag: "/ui/paymentTermsTouched" },
+                // TODO: re-enable when Payment Terms step is restored
+                // { viewId: "paymentTermsView",      touchedFlag: "/ui/paymentTermsTouched" },
                 { viewId: "bankingView",            touchedFlag: "/ui/bankingTouched" },
                 { viewId: "contactsView",           touchedFlag: "/ui/contactsTouched" }
             ];

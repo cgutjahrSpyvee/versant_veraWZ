@@ -8,7 +8,7 @@ sap.ui.define([
     return Controller.extend("vsnt.vera.controller.steps.Banking", {
 
         onInit: function () {
-            var sBankFormUrl = sap.ui.require.toUrl("vsnt/vera/assets/Global Vendor Bank Detail Form.xlsx");
+            var sBankFormUrl = sap.ui.require.toUrl("vsnt/vera/assets/GlobalVendorBankDetailForm.xlsx");
             this.byId("bankFormDownloadLink").setHref(sBankFormUrl);
         },
 
