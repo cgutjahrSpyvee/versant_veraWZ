@@ -110,7 +110,8 @@ sap.ui.define([
 
             var aMissing = [];
             if (!oBasic.legalName) { aMissing.push("Legal Name"); }
-            if (!sVendorType)      { aMissing.push("Vendor Type"); }
+            // TODO: re-enable when Vendor Type is restored
+            // if (!sVendorType)      { aMissing.push("Vendor Type"); }
             if (!oAddr.country)    { aMissing.push("Country"); }
             if (!oAddr.address1)   { aMissing.push("Address Line 1"); }
             if (!oAddr.city)       { aMissing.push("City"); }

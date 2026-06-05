@@ -36,6 +36,7 @@
             columnsXL="2" columnsL="2" columnsM="1">
 
             <f:content>
+                <!-- TODO: re-enable Vendor Type when needed
                 <Label text="Vendor Type" required="true"/>
                 <Select id="vendorType" selectedKey="{reg>/vendorType}" change=".onVendorTypeChange"
                         valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/vendorType} ? 'Error' : 'None'}"
@@ -56,6 +57,7 @@
                     <core:Item key="091" text="Revenue Share"/>
                     <core:Item key="092" text="Garnishment"/>
                 </Select>
+                -->
 
                 <Label text="{i18n>acceptPO}"/>
                 <CheckBox id="acceptPO" selected="{reg>/basic/acceptPO}" select=".onAcceptPOChange"/>

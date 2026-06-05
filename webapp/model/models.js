@@ -23,6 +23,7 @@ sap.ui.define([
                 userType:      "",
                 companyCodes:  [],
                 approverSSO:   "",
+                userEmail:     "",
                 comments:      "",
                 annualSpend:   "",
                 requestedFor:  "",

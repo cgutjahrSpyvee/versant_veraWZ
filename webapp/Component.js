@@ -35,6 +35,7 @@ sap.ui.define([
             this._setShellTitle("VeRA — Vendor Registration");
             this._initFLPNavigation();
             this._handleIntentNavigation();
+            this._loadUserEmail();
         },
 
         getService: function () {
@@ -72,6 +73,19 @@ sap.ui.define([
                 // "maintain" and other actions stay on home for now
             } catch (e) {
                 /* outside FLP — no intent routing */
+            }
+        },
+
+        _loadUserEmail: function () {
+            var that = this;
+            try {
+                var oUserService = sap.ushell.Container.getServiceAsync("UserInfo");
+                oUserService.then(function (oService) {
+                    var sEmail = oService.getEmail();
+                    that.getModel("reg").setProperty("/userEmail", sEmail || "");
+                });
+            } catch (e) {
+                /* outside FLP — no user info */
             }
         },
 

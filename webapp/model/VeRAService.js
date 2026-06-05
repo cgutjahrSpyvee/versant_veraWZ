@@ -293,6 +293,7 @@ sap.ui.define([
                     comments:               oRegModel.comments    || "",
                     annualSpend:            oRegModel.annualSpend  || "",
                     requestedFor:           oRegModel.requestedFor || "",
+                    userEmail:              oRegModel.userEmail    || "",
 
                     legalName:              oBasic.legalName      || "",
                     invoicingName:          oBasic.invoicingName  || "",
