@@ -384,6 +384,7 @@ sap.ui.define([
                     type: "GET",
                     data: oParams,
                     dataType: "json",
+                    timeout: 30000,
                     headers: that._csrfHeaders()
                 }).fail(function (jqXHR, sStatus, sError) {
                     Log.error("VeRAService GET failed: " + sService + " — " + sError);
@@ -400,6 +401,7 @@ sap.ui.define([
                     type: "POST",
                     data: oData,
                     dataType: "json",
+                    timeout: 30000,
                     headers: that._csrfHeaders()
                 }).fail(function (jqXHR, sStatus, sError) {
                     Log.error("VeRAService POST failed: " + sService + " — " + sError);

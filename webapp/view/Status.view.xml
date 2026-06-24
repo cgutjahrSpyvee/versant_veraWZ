@@ -48,24 +48,23 @@
                             : ${i18n>statusDraftDesc}}"/>
                 </attributes>
 
-                <headerContainer>
-                    <OverflowToolbar>
-                        <Button
-                            text="{i18n>btnRegister}"
-                            press=".onNavRegister"
-                            type="Emphasized"
-                            icon="sap-icon://add"
-                            visible="{= ${reg>/status} === 'DRAFT'}"/>
-                        <Button
-                            text="{i18n>btnMaintain}"
-                            press=".onNavMaintain"
-                            icon="sap-icon://edit"
-                            visible="{= ${reg>/status} === 'APPROVED'}"/>
-                    </OverflowToolbar>
-                </headerContainer>
-
             </ObjectHeader>
 
+            <OverflowToolbar>
+                <Button
+                    text="{i18n>btnRegister}"
+                    press=".onNavRegister"
+                    type="Emphasized"
+                    icon="sap-icon://add"
+                    visible="{= ${reg>/status} === 'DRAFT'}"/>
+                <Button
+                    text="{i18n>btnMaintain}"
+                    press=".onNavMaintain"
+                    icon="sap-icon://edit"
+                    visible="{= ${reg>/status} === 'APPROVED'}"/>
+            </OverflowToolbar>
+
+            <!-- My Requests panel hidden for now
             <Panel
                 headerText="{i18n>myRequests}"
                 visible="{= ${inbox>/items}.length > 0}"
@@ -74,7 +73,6 @@
                 <Table
                     id="inboxTable"
                     items="{inbox>/items}"
-                    mode="SingleSelect"
                     growing="true"
                     growingThreshold="20"
                     noDataText="{i18n>noRequests}">
@@ -84,8 +82,6 @@
                         <Column><Text text="{i18n>vendorName}"/></Column>
                         <Column><Text text="{i18n>status}"/></Column>
                         <Column><Text text="{i18n>lastUpdated}"/></Column>
-                        <Column><Text text="{i18n>source}"/></Column>
-                        <Column hAlign="End"><Text text="{i18n>actions}"/></Column>
                     </columns>
 
                     <items>
@@ -105,35 +101,12 @@
                                               ${inbox>status/text} === 'Pending Approval' ||
                                               ${inbox>status/text} === 'Pending Submission' ? 'Warning' : 'None'}"/>
                                 <Text text="{inbox>date}"/>
-                                <Text text="{inbox>source}"/>
-                                <OverflowToolbar>
-                                    <ToolbarSpacer/>
-                                    <Button
-                                        icon="sap-icon://refresh"
-                                        tooltip="{i18n>btnResend}"
-                                        press=".onResendRequest"
-                                        type="Transparent"
-                                        visible="{= ${inbox>actionkey} &amp;&amp; ${inbox>actionkey}.indexOf('R') >= 0}">
-                                        <customData>
-                                            <core:CustomData key="requestId" value="{inbox>id}" writeToDom="false"/>
-                                        </customData>
-                                    </Button>
-                                    <Button
-                                        icon="sap-icon://decline"
-                                        tooltip="{i18n>btnCancel}"
-                                        press=".onCancelRequest"
-                                        type="Transparent"
-                                        visible="{= ${inbox>actionkey} &amp;&amp; ${inbox>actionkey}.indexOf('C') >= 0}">
-                                        <customData>
-                                            <core:CustomData key="requestId" value="{inbox>id}" writeToDom="false"/>
-                                        </customData>
-                                    </Button>
-                                </OverflowToolbar>
                             </cells>
                         </ColumnListItem>
                     </items>
                 </Table>
             </Panel>
+            -->
 
             <IllustratedMessage
                 illustrationType="NoData"
