@@ -50,20 +50,6 @@
 
             </ObjectHeader>
 
-            <OverflowToolbar>
-                <Button
-                    text="{i18n>btnRegister}"
-                    press=".onNavRegister"
-                    type="Emphasized"
-                    icon="sap-icon://add"
-                    visible="{= ${reg>/status} === 'DRAFT'}"/>
-                <Button
-                    text="{i18n>btnMaintain}"
-                    press=".onNavMaintain"
-                    icon="sap-icon://edit"
-                    visible="{= ${reg>/status} === 'APPROVED'}"/>
-            </OverflowToolbar>
-
             <!-- My Requests panel hidden for now
             <Panel
                 headerText="{i18n>myRequests}"

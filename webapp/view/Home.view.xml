@@ -18,6 +18,20 @@
                 <f:layout>
                     <f:GridContainerSettings rowSize="5rem" columnSize="5rem" gap="1rem"/>
                 </f:layout>
+                
+                <GenericTile
+                    header="{i18n>btnStatus}"
+                    subheader="{i18n>homeStatusDesc}"
+                    visible="true"
+                    press=".onNavStatus"
+                    frameType="TwoByOne">
+                    <TileContent>
+                        <ImageContent src="sap-icon://status-in-process"/>
+                    </TileContent>
+                    <layoutData>
+                        <f:GridContainerItemLayoutData minRows="2" columns="4"/>
+                    </layoutData>
+                </GenericTile>
 
                 <GenericTile
                     header="{i18n>btnRegister}"
@@ -46,19 +60,6 @@
                     </layoutData>
                 </GenericTile>
 
-                <GenericTile
-                    header="{i18n>btnStatus}"
-                    subheader="{i18n>homeStatusDesc}"
-                    visible="false"
-                    press=".onNavStatus"
-                    frameType="TwoByOne">
-                    <TileContent>
-                        <ImageContent src="sap-icon://status-in-process"/>
-                    </TileContent>
-                    <layoutData>
-                        <f:GridContainerItemLayoutData minRows="2" columns="4"/>
-                    </layoutData>
-                </GenericTile>
 
             </f:GridContainer>
         </content>
