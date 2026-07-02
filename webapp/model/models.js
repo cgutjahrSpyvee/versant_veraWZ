@@ -24,6 +24,7 @@ sap.ui.define([
                 companyCodes:  [],
                 approverSSO:   "",
                 userEmail:     "",
+                userName:      "",
                 comments:      "",
                 annualSpend:   "",
                 requestedFor:  "",

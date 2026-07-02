@@ -35,7 +35,7 @@ sap.ui.define([
             this._setShellTitle("VeRA — Vendor Registration");
             this._initFLPNavigation();
             this._handleIntentNavigation();
-            this._loadUserEmail();
+            this._loadUserInfo();
         },
 
         getService: function () {
@@ -76,16 +76,44 @@ sap.ui.define([
             }
         },
 
-        _loadUserEmail: function () {
+        _loadUserInfo: function () {
             var that = this;
             try {
                 var oUserService = sap.ushell.Container.getServiceAsync("UserInfo");
                 oUserService.then(function (oService) {
-                    var sEmail = oService.getEmail();
-                    that.getModel("reg").setProperty("/userEmail", sEmail || "");
+                    var oUser = oService.getUser ? oService.getUser() : null;
+
+                    // Full name — service method, then User object, then first+last.
+                    var sName = (oService.getFullName && oService.getFullName()) ||
+                                (oUser && oUser.getFullName && oUser.getFullName()) || "";
+                    if (!sName && oUser && oUser.getFirstName) {
+                        sName = [oUser.getFirstName(), oUser.getLastName && oUser.getLastName()]
+                                    .filter(Boolean).join(" ");
+                    }
+
+                    // Email — service method, then User object, then attribute.
+                    var sEmail = (oService.getEmail && oService.getEmail()) ||
+                                 (oUser && oUser.getEmail && oUser.getEmail()) || "";
+
+                    var oReg = that.getModel("reg");
+                    oReg.setProperty("/userEmail", sEmail);
+                    oReg.setProperty("/userName", sName);
+                    that._seedPrimaryContact(sName, sEmail);
                 });
             } catch (e) {
                 /* outside FLP — no user info */
+            }
+        },
+
+        // Pre-populate the primary (first) contact with the current user's
+        // name and email, so long as no contacts have been entered yet.
+        _seedPrimaryContact: function (sName, sEmail) {
+            var oReg      = this.getModel("reg");
+            var aContacts = oReg.getProperty("/contacts/items");
+            if (aContacts && aContacts.length === 0) {
+                oReg.setProperty("/contacts/items", [{
+                    name: sName, email: sEmail, phone: "", fax: "", department: ""
+                }]);
             }
         },
 
