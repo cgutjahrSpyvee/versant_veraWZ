@@ -65,12 +65,36 @@ npm run start-local
 # Build MTA archive
 npm run build:mta
 
-# Deploy to CF
+# Deploy to CF (dev — uses default backend-url from mta.yaml)
 cf deploy mta_archives/vera-fiori_1.0.0.mtar
 
 # Undeploy
 npm run undeploy
 ```
+
+## Environment Configuration (QA / Production)
+
+The `VeRA_Backend` destination URL differs per environment. Rather than hardcoding it, `mta.yaml` parameterizes it as `${backend-url}` and each environment overrides the value with an MTA **extension descriptor** (`.mtaext`).
+
+| File | Environment | `backend-url` |
+|------|-------------|---------------|
+| `mta.yaml` (default) | Dev | dev host (`...bwz-dev-use...us10-001`) |
+| `qa.mtaext` | QA | QA host |
+| `prod.mtaext` | Production | Prod host (`...bwz-prod-usw...us11`) |
+
+Pass the matching extension with `-e` at deploy time. The extension only overrides `backend-url`; everything else comes from `mta.yaml`.
+
+```bash
+cf deploy mta_archives/vera-fiori_1.0.0.mtar                 # Dev (default)
+cf deploy mta_archives/vera-fiori_1.0.0.mtar -e qa.mtaext    # QA
+cf deploy mta_archives/vera-fiori_1.0.0.mtar -e prod.mtaext  # Production
+```
+
+Because the destination service uses `existing_destinations_policy: update`, each deploy overwrites the `VeRA_Backend` destination with the URL for that environment — no manual cockpit edits needed.
+
+**To change a URL:** edit the `backend-url` value in the relevant `.mtaext` (or the default in `mta.yaml` for Dev) and redeploy.
+
+> Note: the subaccount-level `Coding_Portal` destination is managed manually in each subaccount and is **not** part of the `.mtaext` overrides. It is currently referenced as `Coding_Portal_QA` in `approuter/xs-app.json`; because the `.mtaext` mechanism can only override values in `mta.yaml` (not the contents of `xs-app.json`), a Production deploy needs this destination to resolve correctly per subaccount.
 
 ## Deployment Mode
 

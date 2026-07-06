@@ -1,0 +1,6 @@
+_schema-version: "3.2"
+ID: vera-fiori.prod
+extends: vera-fiori
+
+parameters:
+  backend-url: https://nbcuniversal-media--llc-versant-bwz-prod-usw-hzdm1zpl-p561bea29.cfapps.us11.hana.ondemand.com/

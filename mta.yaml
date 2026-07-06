@@ -85,7 +85,8 @@ resources:
             Name: VeRA_Backend
             ProxyType: Internet
             Type: HTTP
-            URL: https://nbcuniversal-media--llc-versant-cf-bwz-dev-use-75tfnrq659c99ec0.cfapps.us10-001.hana.ondemand.com
+            URL: ${backend-url}
+            #URL: https://nbcuniversal-media--llc-versant-cf-bwz-dev-use-75tfnrq659c99ec0.cfapps.us10-001.hana.ondemand.com
           existing_destinations_policy: update
       version: 1.0.0
     service: destination
@@ -113,3 +114,4 @@ resources:
 parameters:
   deploy_mode: html5-repo
   enable-parallel-deployments: true
+  #backend-url: https://nbcuniversal-media--llc-versant-cf-bwz-dev-use-75tfnrq659c99ec0.cfapps.us10-001.hana.ondemand.com
