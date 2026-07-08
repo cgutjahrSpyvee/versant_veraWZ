@@ -4,7 +4,7 @@
     {
       "source": "^/vera-portal/(.*)",
       "target": "/irj/servlet/prt/portal/prtroot/com.vsnt.html5_vra.portalservices.$1",
-      "destination": "Coding_Portal_QA",
+      "destination": "Coding_Portal",
       "authenticationType": "none",
       "csrfProtection": false
     },

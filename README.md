@@ -19,7 +19,7 @@ SAP Build Work Zone (managed approuter)
                                         |
                                   Cloud Connector (Location ID: VRASCCD)
                                         |
-                                  OnPremise NetWeaver Portal (Coding_Portal_QA)
+                                  OnPremise NetWeaver Portal (Coding_Portal)
 ```
 
 - **Work Zone managed approuter** handles user authentication and serves the HTML5 app from the HTML5 Apps Repository
@@ -51,7 +51,7 @@ SAP Build Work Zone (managed approuter)
 
 | Name | Level | Type | Purpose |
 |------|-------|------|---------|
-| `Coding_Portal_QA` | Subaccount | OnPremise / BasicAuth | NetWeaver Portal backend |
+| `Coding_Portal` | Subaccount | OnPremise / BasicAuth | NetWeaver Portal backend |
 | `SWZ_ContentRepo` | Subaccount | OnPremise | Content repository |
 | `VeRA_Backend` | Instance | Internet / NoAuth | Points to standalone approuter CF URL |
 | `ui5` | Instance | Internet / NoAuth | SAPUI5 CDN (`https://ui5.sap.com`) |
@@ -94,7 +94,7 @@ Because the destination service uses `existing_destinations_policy: update`, eac
 
 **To change a URL:** edit the `backend-url` value in the relevant `.mtaext` (or the default in `mta.yaml` for Dev) and redeploy.
 
-> Note: the subaccount-level `Coding_Portal` destination is managed manually in each subaccount and is **not** part of the `.mtaext` overrides. It is currently referenced as `Coding_Portal_QA` in `approuter/xs-app.json`; because the `.mtaext` mechanism can only override values in `mta.yaml` (not the contents of `xs-app.json`), a Production deploy needs this destination to resolve correctly per subaccount.
+> Note: the subaccount-level `Coding_Portal` destination is managed manually in each subaccount and is **not** part of the `.mtaext` overrides. It is currently referenced as `Coding_Portal` in `approuter/xs-app.json`; because the `.mtaext` mechanism can only override values in `mta.yaml` (not the contents of `xs-app.json`), a Production deploy needs this destination to resolve correctly per subaccount.
 
 ## Deployment Mode
 
