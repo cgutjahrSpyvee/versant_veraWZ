@@ -1,9 +1,8 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/m/MessageBox",
-    "sap/m/MessageToast",
-    "sap/base/Log"
-], function (Controller, MessageBox, MessageToast, Log) {
+    "sap/m/MessageToast"
+], function (Controller, MessageBox, MessageToast) {
     "use strict";
 
     return Controller.extend("vsnt.vera.controller.Status", {
@@ -18,41 +17,7 @@ sap.ui.define([
         _onRouteMatched: function () { this._loadInbox(); },
 
         _loadInbox: function () {
-            var that   = this;
-            var oInbox = this.getOwnerComponent().getModel("inbox");
-            oInbox.setProperty("/busy", true);
-
-            this._svc().getInbox()
-                .done(function (aItems) {
-                    // Clear busy first so a later exception can never leave the
-                    // page spinning forever.
-                    oInbox.setProperty("/busy", false);
-                    oInbox.setProperty("/items", aItems || []);
-                    try {
-                        if (aItems && aItems.length > 0) {
-                            var oLatest = aItems[0];
-                            var oReg    = that.getOwnerComponent().getModel("reg");
-                            oReg.setProperty("/status",
-                                that._mapPortalStatus(oLatest.status && oLatest.status.text));
-                            if (oLatest.id) { oReg.setProperty("/requestId", oLatest.id); }
-                        }
-                    } catch (e) {
-                        Log.error("Status: failed to map inbox item — " + e.message);
-                    }
-                })
-                .fail(function () {
-                    oInbox.setProperty("/busy", false);
-                    MessageBox.error("Could not load registration status. Please refresh.");
-                });
-        },
-
-        _mapPortalStatus: function (sText) {
-            if (!sText) { return "DRAFT"; }
-            var s = sText.toLowerCase();
-            if (s.indexOf("approv") >= 0 || s === "completed") { return "APPROVED"; }
-            if (s.indexOf("reject") >= 0 || s === "failed")    { return "REJECTED"; }
-            if (s === "pending submission")                    { return "DRAFT"; }
-            return "PENDING";
+            return this.getOwnerComponent().loadInvites();
         },
 
         onCancelRequest: function (oEvent) {

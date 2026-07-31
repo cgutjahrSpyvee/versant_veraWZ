@@ -12,8 +12,9 @@
  */
 sap.ui.define([
     "sap/ui/base/Object",
+    "sap/ui/core/format/DateFormat",
     "sap/base/Log"
-], function (BaseObject, Log) {
+], function (BaseObject, DateFormat, Log) {
     "use strict";
 
     // Derive the app's service-segment from the UI5 module path and manifest version.
@@ -24,6 +25,44 @@ sap.ui.define([
     var sVersion = jQuery.sap.loadResource("vsnt/vera/manifest.json", {async: false})["sap.app"].applicationVersion.version;
     var BASE = "/" + sAppSegment + "-" + sVersion + "/vera-portal/";
     var _instance = null;
+
+    // ZZSF_VRA_INVSTAT codes returned by wz_services?Action=inviteInfo.
+    // `text`, `actions` and `edit` are ported verbatim from the portal's
+    // inbox.java, which reads the same field; `state` and `reg` are this
+    // app's presentation of those texts (ObjectStatus state / ObjectHeader).
+    //   actions: C = Cancel, R = Resend, S = Send, A = approval in flight
+    //   edit:    D = display only, E = editable, "" = neither
+    //   open:    still in flight — false only for the four settled end states
+    //            (registered, completed, and the two cancellations).
+    var INVITE_STATUS = {
+        "0": { text: "Invite Pending Approval",       state: "Warning", reg: "PENDING",  actions: "CA", edit: "D", open: true  },
+        "1": { text: "Invite Approved",               state: "Success", reg: "APPROVED", actions: "",   edit: "",  open: true  },
+        "2": { text: "Invite Approved",               state: "Success", reg: "APPROVED", actions: "",   edit: "",  open: true  },
+        "3": { text: "Invite Rejected",               state: "Error",   reg: "REJECTED", actions: "CS", edit: "E", open: true  },
+        "4": { text: "Invite Approved",               state: "Success", reg: "APPROVED", actions: "",   edit: "",  open: true  },
+        "5": { text: "Pending Vendor Action",         state: "Warning", reg: "PENDING",  actions: "CR", edit: "D", open: true  },
+        "6": { text: "Invite Registered",             state: "Success", reg: "PENDING",  actions: "",   edit: "",  open: false },
+        "7": { text: "Email Address Failure",         state: "Error",   reg: "PENDING",  actions: "CS", edit: "E", open: true  },
+        "8": { text: "Invite Pending Term Approval",  state: "Warning", reg: "PENDING",  actions: "CA", edit: "D", open: true  },
+        "9": { text: "Invite Cancelled",              state: "None",    reg: "DRAFT",    actions: "S",  edit: "E", open: false },
+        "S": { text: "Pending Submission",            state: "Warning", reg: "DRAFT",    actions: "",   edit: "",  open: true  },
+        "A": { text: "In Review",                     state: "Warning", reg: "PENDING",  actions: "",   edit: "",  open: true  },
+        "D": { text: "Rejected",                      state: "Error",   reg: "REJECTED", actions: "C",  edit: "D", open: true  },
+        "R": { text: "Rejected",                      state: "Error",   reg: "REJECTED", actions: "C",  edit: "D", open: true  },
+        "P": { text: "Completed",                     state: "Success", reg: "APPROVED", actions: "",   edit: "",  open: false },
+        "F": { text: "Failed",                        state: "Error",   reg: "REJECTED", actions: "C",  edit: "D", open: true  },
+        "T": { text: "Pending Term Approval",         state: "Warning", reg: "PENDING",  actions: "",   edit: "",  open: true  },
+        "W": { text: "Pending Approval",              state: "Warning", reg: "PENDING",  actions: "",   edit: "",  open: true  },
+        "O": { text: "Request Cancelled",             state: "None",    reg: "DRAFT",    actions: "",   edit: "",  open: false },
+        "I": { text: "Pending IC Approval",           state: "Warning", reg: "PENDING",  actions: "CA", edit: "D", open: true  },
+        "E": { text: "Pending IC & Term Approval",    state: "Warning", reg: "PENDING",  actions: "",   edit: "",  open: true  },
+        "M": { text: "Pending Mgmt. Approval",        state: "Warning", reg: "PENDING",  actions: "CA", edit: "D", open: true  },
+        "X": { text: "W8 Validation Failed",          state: "Error",   reg: "PENDING",  actions: "",   edit: "E", open: true  },
+        "Y": { text: "IC Reject",                     state: "Error",   reg: "REJECTED", actions: "",   edit: "E", open: true  },
+        "Z": { text: "Pending W8 Validation",         state: "Warning", reg: "PENDING",  actions: "",   edit: "D", open: true  },
+        "U": { text: "Pending W8 Submission",         state: "Warning", reg: "PENDING",  actions: "CA", edit: "D", open: true  },
+        "V": { text: "Pending TAX Review",            state: "Warning", reg: "PENDING",  actions: "CA", edit: "D", open: true  }
+    };
 
     // Check if the user is accessing the application outside of WZ
     if (sModulePath === ".") {
@@ -124,6 +163,59 @@ sap.ui.define([
 
         getInbox: function () {
             return this._get("inbox", {});
+        },
+
+        // ── Invites (wz_services) ───────────────────────────────────────
+
+        /**
+         * Invites raised for / by an email address.
+         * Resolves with { code, message, inviteData[], vadminData[] };
+         * code "0" means success, anything else carries `message`.
+         */
+        getInviteInfo: function (sEmail) {
+            return this._get("wz_services", {
+                Action: "inviteInfo",
+                Email:  sEmail || ""
+            });
+        },
+
+        /**
+         * ZZSF_VRA_INVSTAT code → { code, text, state, reg, actions, edit }.
+         * Unknown codes fall through showing the raw code rather than a blank
+         * cell, so a new backend status is visible instead of silently empty.
+         */
+        mapInviteStatus: function (sCode) {
+            var sKey   = String(sCode || "").toUpperCase();
+            var oEntry = INVITE_STATUS[sKey];
+            if (!oEntry) {
+                Log.warning("VeRAService: unmapped ZZSF_VRA_INVSTAT '" + sCode + "'");
+                return {
+                    code: sKey, text: sKey, state: "None",
+                    reg: "PENDING", actions: "", edit: ""
+                };
+            }
+            return jQuery.extend({ code: sKey }, oEntry);
+        },
+
+        /** One inviteData row → the shape the Home and Status tables bind to. */
+        mapInviteRow: function (oInv) {
+            return {
+                id:      oInv.ZZSF_VRA_EMLID || "",
+                name:    oInv.VEND_NAME      || "",
+                type:    oInv.VEND_DESC      || "",
+                contact: [oInv.FIRST_NAME, oInv.LAST_NAME].filter(Boolean).join(" "),
+                status:  this.mapInviteStatus(oInv.ZZSF_VRA_INVSTAT),
+                date:    this._formatChanged(oInv.CHANGE_DATE, oInv.CHANGE_TIME),
+                invite:  oInv
+            };
+        },
+
+        // CHANGE_DATE "2026-07-24" + CHANGE_TIME "16:23:40" → locale date/time.
+        _formatChanged: function (sDate, sTime) {
+            if (!sDate) { return ""; }
+            var oDate = new Date(sDate + "T" + (sTime || "00:00:00"));
+            if (isNaN(oDate.getTime())) { return sDate; }
+            return DateFormat.getDateTimeInstance({ style: "medium" }).format(oDate);
         },
 
         searchVendors: function (oParams) {

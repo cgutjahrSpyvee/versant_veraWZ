@@ -1,8 +1,7 @@
 <mvc:View
     controllerName="vsnt.vera.controller.Home"
     xmlns:mvc="sap.ui.core.mvc"
-    xmlns="sap.m"
-    xmlns:f="sap.f">
+    xmlns="sap.m">
 
     <Page
         id="homePage"
@@ -11,57 +10,69 @@
         backgroundDesign="List">
 
         <content>
-            <f:GridContainer
-                class="sapUiLargeMargin"
-                snapToRow="true">
 
-                <f:layout>
-                    <f:GridContainerSettings rowSize="5rem" columnSize="5rem" gap="1rem"/>
-                </f:layout>
-                
-                <GenericTile
-                    header="{i18n>btnStatus}"
-                    subheader="{i18n>homeStatusDesc}"
-                    visible="true"
-                    press=".onNavStatus"
-                    frameType="TwoByOne">
-                    <TileContent>
-                        <ImageContent src="sap-icon://status-in-process"/>
-                    </TileContent>
-                    <layoutData>
-                        <f:GridContainerItemLayoutData minRows="2" columns="4"/>
-                    </layoutData>
-                </GenericTile>
+            <!-- A registration can only start from an invitation, so the invite
+                 list is the whole home screen: it carries the status and is the
+                 way into the wizard. -->
+            <Table
+                id="openInvitesTable"
+                items="{inbox>/open}"
+                mode="SingleSelectMaster"
+                itemPress=".onInvitePress"
+                growing="true"
+                growingThreshold="20"
+                busy="{inbox>/busy}"
+                class="sapUiSmallMarginTop">
 
-                <GenericTile
-                    header="{i18n>btnRegister}"
-                    subheader="{i18n>homeRegisterDesc}"
-                    press=".onNavRegister"
-                    frameType="TwoByOne">
-                    <TileContent>
-                        <ImageContent src="sap-icon://add-document"/>
-                    </TileContent>
-                    <layoutData>
-                        <f:GridContainerItemLayoutData minRows="2" columns="4"/>
-                    </layoutData>
-                </GenericTile>
+                <noData>
+                    <IllustratedMessage
+                        illustrationType="NoTasks"
+                        title="{i18n>noOpenInvitesTitle}"
+                        description="{i18n>noOpenInvitesDescription}"/>
+                </noData>
 
-                <GenericTile
-                    header="{i18n>btnMaintain}"
-                    subheader="{i18n>homeMaintainDesc}"
-                    press=".onNavMaintain"
-                    visible="false"
-                    frameType="TwoByOne">
-                    <TileContent>
-                        <ImageContent src="sap-icon://edit"/>
-                    </TileContent>
-                    <layoutData>
-                        <f:GridContainerItemLayoutData minRows="2" columns="4"/>
-                    </layoutData>
-                </GenericTile>
+                <headerToolbar>
+                    <Toolbar>
+                        <Title text="{i18n>openInvites}" level="H2"/>
+                        <ToolbarSpacer/>
+                        <Button
+                            icon="sap-icon://refresh"
+                            tooltip="{i18n>btnRefresh}"
+                            press=".onRefreshInvites"
+                            type="Transparent"/>
+                    </Toolbar>
+                </headerToolbar>
 
+                <columns>
+                    <Column><Text text="{i18n>requestId}"/></Column>
+                    <Column><Text text="{i18n>vendorName}"/></Column>
+                    <Column
+                        minScreenWidth="Tablet"
+                        demandPopin="true"
+                        popinDisplay="Inline">
+                        <Text text="{i18n>status}"/>
+                    </Column>
+                    <Column
+                        minScreenWidth="Desktop"
+                        demandPopin="true"
+                        popinDisplay="Inline">
+                        <Text text="{i18n>lastUpdated}"/>
+                    </Column>
+                </columns>
 
-            </f:GridContainer>
+                <items>
+                    <ColumnListItem type="Navigation">
+                        <cells>
+                            <ObjectIdentifier title="{inbox>id}" text="{inbox>type}"/>
+                            <Text text="{inbox>name}"/>
+                            <ObjectStatus
+                                text="{inbox>status/text}"
+                                state="{inbox>status/state}"/>
+                            <Text text="{inbox>date}"/>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
         </content>
 
     </Page>

@@ -27,7 +27,8 @@
           "semanticObject": "VeRA",
           "action": "register",
           "signature": { "parameters": {}, "additionalParameters": "allowed" },
-          "title": "Register as Vendor",
+          "title": "Vendor Registration",
+          "subTitle": "Your open invitations",
           "icon": "sap-icon://vendor"
         },
         "VeRA-maintain": {

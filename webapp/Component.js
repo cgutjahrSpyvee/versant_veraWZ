@@ -5,9 +5,11 @@
 sap.ui.define([
     "sap/ui/core/UIComponent",
     "sap/ui/Device",
+    "sap/m/MessageBox",
+    "sap/base/Log",
     "vsnt/vera/model/models",
     "vsnt/vera/model/VeRAService"
-], function (UIComponent, Device, models, VeRAService) {
+], function (UIComponent, Device, MessageBox, Log, models, VeRAService) {
     "use strict";
 
     return UIComponent.extend("vsnt.vera.Component", {
@@ -21,11 +23,7 @@ sap.ui.define([
             UIComponent.prototype.init.apply(this, arguments);
 
             this.setModel(models.createDeviceModel(), "device");
-            var oRegModel = models.createRegistrationModel();
-            // TODO: remove these when steps are re-enabled
-            oRegModel.setProperty("/wizard/stepsValidated/1", true);  // Company/Approver
-            oRegModel.setProperty("/wizard/stepsValidated/3", true);  // Payment Terms
-            this.setModel(oRegModel, "reg");
+            this.setModel(models.createRegistrationModel(), "reg");
             this.setModel(models.createInboxModel(), "inbox");
 
             this._veraService = VeRAService.getInstance();
@@ -36,10 +34,79 @@ sap.ui.define([
             this._initFLPNavigation();
             this._handleIntentNavigation();
             this._loadUserInfo();
+
+            // Start fetching invites immediately so the Home list is populated
+            // by the time the user has looked at the tiles.
+            this.loadInvites();
         },
 
         getService: function () {
             return this._veraService;
+        },
+
+        /**
+         * Fills the "inbox" model from wz_services?Action=inviteInfo for the
+         * signed-in user. Owned by the Component rather than a controller so
+         * Home and Status share one fetch and one copy of the data.
+         *
+         * Resolves with the mapped rows; resolves with [] on any failure,
+         * having already reported it. Never rejects.
+         */
+        loadInvites: function () {
+            var that      = this;
+            var oSvc      = this._veraService;
+            var oInbox    = this.getModel("inbox");
+            var oDeferred = jQuery.Deferred();
+
+            oInbox.setProperty("/busy", true);
+
+            var fnDone = function (aItems, sError) {
+                oInbox.setProperty("/busy", false);
+                oInbox.setProperty("/loaded", true);
+                oInbox.setProperty("/items", aItems);
+                oInbox.setProperty("/open", aItems.filter(function (o) {
+                    return o.status.open;
+                }));
+                if (sError) { MessageBox.error(sError); }
+                oDeferred.resolve(aItems);
+            };
+
+            // wz_services keys the list off the signed-in user's email, which
+            // arrives asynchronously from the FLP UserInfo service.
+            this.getUserInfo().done(function (oUser) {
+                oSvc.getInviteInfo(oUser.email)
+                    .done(function (oData) {
+                        if (oData && oData.code !== "0") {
+                            fnDone([], oData.message || "Could not load your invitations.");
+                            return;
+                        }
+                        var aItems;
+                        try {
+                            aItems = ((oData && oData.inviteData) || [])
+                                .map(oSvc.mapInviteRow, oSvc);
+                        } catch (e) {
+                            Log.error("Component: failed to map invite data — " + e.message);
+                            fnDone([], "Could not read your invitations.");
+                            return;
+                        }
+                        fnDone(aItems);
+                        that._syncRegStatus(aItems);
+                    })
+                    .fail(function () {
+                        fnDone([], "Could not load your invitations. Please refresh.");
+                    });
+            });
+
+            return oDeferred.promise();
+        },
+
+        // Drive the Status page's ObjectHeader from the most recent invite.
+        _syncRegStatus: function (aItems) {
+            if (!aItems.length) { return; }
+            var oLatest = aItems[0];
+            var oReg    = this.getModel("reg");
+            oReg.setProperty("/status", oLatest.status.reg);
+            if (oLatest.id) { oReg.setProperty("/requestId", oLatest.id); }
         },
 
         _setShellTitle: function (sTitle) {
@@ -56,28 +123,39 @@ sap.ui.define([
 
         _handleIntentNavigation: function () {
             try {
-                var oComponentData = this.getComponentData();
-                var oStartupParams = oComponentData && oComponentData.startupParameters || {};
                 var oParsed = sap.ushell && sap.ushell.Container &&
                     sap.ushell.Container.getService("URLParsing").parseShellHash(
                         window.location.hash
                     );
                 var sAction = oParsed && oParsed.action;
 
-                if (sAction === "register") {
-                    var sMode = oStartupParams.mode ? oStartupParams.mode[0] : "register";
-                    this.getRouter().navTo("register", { mode: sMode });
-                } else if (sAction === "status") {
+                if (sAction === "status") {
                     this.getRouter().navTo("status");
                 }
-                // "maintain" and other actions stay on home for now
+                // Every other action — including "register", which the Workzone
+                // tile uses — lands on Home. The wizard is no longer a valid
+                // entry point on its own: it has to be seeded from an invite,
+                // so it is reachable only by opening a row in the invite list.
             } catch (e) {
                 /* outside FLP — no intent routing */
             }
         },
 
+        /**
+         * Resolves with { name, email } once the FLP UserInfo service answers,
+         * or with empty strings when running outside the launchpad. Never
+         * rejects, so callers need no separate error path.
+         */
+        getUserInfo: function () {
+            return this._pUserInfo ||
+                jQuery.Deferred().resolve({ name: "", email: "" }).promise();
+        },
+
         _loadUserInfo: function () {
-            var that = this;
+            var that      = this;
+            var oDeferred = jQuery.Deferred();
+            this._pUserInfo = oDeferred.promise();
+
             try {
                 var oUserService = sap.ushell.Container.getServiceAsync("UserInfo");
                 oUserService.then(function (oService) {
@@ -99,9 +177,13 @@ sap.ui.define([
                     oReg.setProperty("/userEmail", sEmail);
                     oReg.setProperty("/userName", sName);
                     that._seedPrimaryContact(sName, sEmail);
+                    oDeferred.resolve({ name: sName, email: sEmail });
+                }, function () {
+                    oDeferred.resolve({ name: "", email: "" });
                 });
             } catch (e) {
                 /* outside FLP — no user info */
+                oDeferred.resolve({ name: "", email: "" });
             }
         },
 

@@ -50,7 +50,6 @@
 
             </ObjectHeader>
 
-            <!-- My Requests panel hidden for now
             <Panel
                 headerText="{i18n>myRequests}"
                 visible="{= ${inbox>/items}.length > 0}"
@@ -77,24 +76,15 @@
                                 <Text text="{inbox>name}"/>
                                 <ObjectStatus
                                     text="{inbox>status/text}"
-                                    state="{= ${inbox>status/text} === 'Completed' ||
-                                              ${inbox>status/text} === 'Invite Approved' ? 'Success' :
-                                              ${inbox>status/text} === 'Rejected' ||
-                                              ${inbox>status/text} === 'Failed' ||
-                                              ${inbox>status/text} === 'Email Address Failure' ? 'Error' :
-                                              ${inbox>status/text} === 'Invite Registered' ||
-                                              ${inbox>status/text} === 'In Review' ||
-                                              ${inbox>status/text} === 'Pending Approval' ||
-                                              ${inbox>status/text} === 'Pending Submission' ? 'Warning' : 'None'}"/>
+                                    state="{inbox>status/state}"/>
                                 <Text text="{inbox>date}"/>
                             </cells>
                         </ColumnListItem>
                     </items>
                 </Table>
             </Panel>
-            -->
 
-            <IllustratedMessage
+           <!-- <IllustratedMessage
                 illustrationType="NoData"
                 title="{i18n>noRequestsTitle}"
                 description="{i18n>noRequestsDescription}"
@@ -107,7 +97,8 @@
                         icon="sap-icon://add"/>
                 </additionalContent>
             </IllustratedMessage>
-
+            -->
+            
         </content>
     </Page>
 
