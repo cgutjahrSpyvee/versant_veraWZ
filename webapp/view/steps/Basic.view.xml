@@ -84,8 +84,8 @@
                         forceSelection="false"
                         valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/country} ? 'Error' : 'None'}"
                         valueStateText="Country is required"
-                        items="{reg>/ui/countries}" change=".onCountryChange">
-                    <core:ListItem key="{reg>country}" text="{reg>description}"/>
+                        items="{ref>/countries}" change=".onCountryChange">
+                    <core:ListItem key="{ref>country}" text="{ref>description}"/>
                 </Select>
 
                 <Label text="{i18n>address1}" required="true"/>
@@ -109,8 +109,8 @@
                         forceSelection="false"
                         valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/state} ? 'Error' : 'None'}"
                         valueStateText="State is required"
-                        items="{reg>/ui/regions}" change=".onBasicFieldChange">
-                    <core:ListItem key="{reg>region}" text="{reg>description}"/>
+                        items="{ref>/regions}" change=".onBasicFieldChange">
+                    <core:ListItem key="{ref>region}" text="{ref>description}"/>
                 </Select>
 
                 <Label text="{i18n>zipCode}" required="true"/>

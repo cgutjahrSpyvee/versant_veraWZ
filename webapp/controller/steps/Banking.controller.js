@@ -28,8 +28,7 @@ sap.ui.define([
             if (!oFile) { return; }
             var that = this;
             this._reg().setProperty("/banking/primaryAccount/bankFileName", oFile.name);
-            this._svc().uploadFile(oFile, this._reg().getProperty("/requestId"),
-                "ZSVRA_REQ", "ACH")
+            this._svc().uploadRegistrationFile(oFile, "ACH", this._reg().getData())
                 .done(function (oResult) {
                     that._reg().setProperty("/banking/primaryAccount/bankDocId", oResult.id || "");
                     MessageToast.show("Bank details form uploaded successfully.");

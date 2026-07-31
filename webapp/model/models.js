@@ -37,8 +37,6 @@ sap.ui.define([
 
                 ui: {
                     busy:                       false,
-                    countries:                  [],
-                    regions:                    [],
                     newNotificationEmail:       "",
                     notificationEmailError:     false,
                     basicTouched:               false,
@@ -132,6 +130,9 @@ sap.ui.define([
             var oData  = oModel.getData();
 
             oData.mode         = "register";
+            // ZZSF_VRA_EMLID is the request id despite the field name, and it
+            // is what managecsdoc expects as "id" when storing attachments.
+            oData.requestId    = oInv.ZZSF_VRA_EMLID  || null;
             oData.inviteId     = oInv.ZZSF_VRA_EMLID  || null;
             oData.vendorId     = oInv.LIFNR           || null;
             oData.vendorType   = oInv.VEND_TYPE       || "";
@@ -156,6 +157,21 @@ sap.ui.define([
 
             oModel.setData(oData);
             return oModel;
+        },
+
+        /**
+         * Reference data shared by every step. Deliberately its own model
+         * rather than a branch of "reg": entering the wizard replaces the reg
+         * model wholesale (see createRegistrationModelFromInvite), which would
+         * wipe these lists and leave the Basic step's dropdowns empty on every
+         * entry after the first.
+         */
+        createRefModel: function () {
+            return new JSONModel({
+                countries:  [],   // [{ country, description }]
+                allRegions: [],   // [{ country, region, description }] — every country
+                regions:    []    // subset of allRegions for the selected country
+            });
         },
 
         createInboxModel: function () {

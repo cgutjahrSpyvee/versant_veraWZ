@@ -22,7 +22,8 @@
                 growing="true"
                 growingThreshold="20"
                 busy="{inbox>/busy}"
-                class="sapUiSmallMarginTop">
+                width="auto"
+                class="sapUiResponsiveMargin">
 
                 <noData>
                     <IllustratedMessage
@@ -35,6 +36,15 @@
                     <Toolbar>
                         <Title text="{i18n>openInvites}" level="H2"/>
                         <ToolbarSpacer/>
+                        <!-- TEST ONLY — impersonate another user's email so the
+                             invite list can be checked without re-signing-in. -->
+                        <Button
+                            id="btnTestEmail"
+                            icon="sap-icon://email"
+                            text="{i18n>btnTestEmail}"
+                            tooltip="{i18n>btnTestEmail}"
+                            press=".onChangeTestEmail"
+                            type="Transparent"/>
                         <Button
                             icon="sap-icon://refresh"
                             tooltip="{i18n>btnRefresh}"

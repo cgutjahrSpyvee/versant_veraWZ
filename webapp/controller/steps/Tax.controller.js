@@ -32,7 +32,7 @@ sap.ui.define([
             if (!oFile) { return; }
             var that = this;
             this._reg().setProperty("/tax/w9FileName", oFile.name);
-            this._svc().uploadFile(oFile, this._reg().getProperty("/requestId"), "ZSVRA_REQ", "W9")
+            this._svc().uploadRegistrationFile(oFile, "W9", this._reg().getData())
                 .done(function (oResult) {
                     that._reg().setProperty("/tax/w9DocId", oResult.id || "");
                     MessageToast.show("W9 uploaded successfully.");
@@ -49,7 +49,7 @@ sap.ui.define([
             if (!oFile) { return; }
             var that = this;
             this._reg().setProperty("/tax/doc590Name", oFile.name);
-            this._svc().uploadFile(oFile, this._reg().getProperty("/requestId"), "ZSVRA_REQ", "590")
+            this._svc().uploadRegistrationFile(oFile, "590", this._reg().getData())
                 .done(function (oResult) {
                     that._reg().setProperty("/tax/doc590Id", oResult.id || "");
                     MessageToast.show("590 form uploaded successfully.");

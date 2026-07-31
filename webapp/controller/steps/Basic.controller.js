@@ -6,50 +6,50 @@ sap.ui.define([
     return Controller.extend("vsnt.vera.controller.steps.Basic", {
 
         onInit: function () {
-            // Load reference data on first activation
             var that = this;
-            this.getOwnerComponent().getService().getCountries()
-                .done(function (aCountries) {
-                    that._reg().setProperty("/ui/countries", aCountries || []);
-                })
-                .fail(function () {
-                    sap.base.Log.error("VeRA: Failed to load countries data");
-                });
 
-            // Load all region data for filtering
-            this.getOwnerComponent().getService().getAllRegionData()
-                .done(function (aAllRegions) {
-                    that._reg().setProperty("/ui/allRegions", aAllRegions || []);
-                    // Initialize regions based on current country selection
-                    that._filterRegionsByCountry();
-                })
-                .fail(function () {
-                    sap.base.Log.error("VeRA: Failed to load region data");
-                });
+            // The country and region lists belong to the Component (see
+            // Component.loadReferenceData) — this step only narrows the region
+            // list to whichever country is selected.
+            this.getOwnerComponent().getReferenceData().done(function () {
+                that._filterRegionsByCountry();
+            });
+
+            // onInit runs once — the router caches the wizard view — but the reg
+            // model is rebuilt from the invite on every entry, so watch the
+            // country property rather than filtering only at startup.
+            this._oCountryBinding = this._reg().bindProperty("/basic/primaryAddress/country");
+            this._oCountryBinding.attachChange(this._filterRegionsByCountry, this);
+        },
+
+        onExit: function () {
+            if (this._oCountryBinding) {
+                this._oCountryBinding.detachChange(this._filterRegionsByCountry, this);
+                this._oCountryBinding.destroy();
+                this._oCountryBinding = null;
+            }
         },
 
         _svc: function () { return this.getOwnerComponent().getService(); },
         _reg: function () { return this.getOwnerComponent().getModel("reg"); },
+        _ref: function () { return this.getOwnerComponent().getModel("ref"); },
 
         onCountryChange: function (oEvent) {
-            // Clear the state selection when country changes
+            // Whatever state was picked belongs to the previous country.
             this._reg().setProperty("/basic/primaryAddress/state", "");
             this._filterRegionsByCountry();
             this._validateStep();
         },
 
         _filterRegionsByCountry: function () {
-            var sCountry = this._reg().getProperty("/basic/primaryAddress/country");
-            var aAllRegions = this._reg().getProperty("/ui/allRegions") || [];
-            
-            if (sCountry) {
-                var aFilteredRegions = aAllRegions.filter(function (oRegion) {
+            var sCountry    = this._reg().getProperty("/basic/primaryAddress/country");
+            var aAllRegions = this._ref().getProperty("/allRegions") || [];
+
+            this._ref().setProperty("/regions", sCountry
+                ? aAllRegions.filter(function (oRegion) {
                     return oRegion.country === sCountry;
-                });
-                this._reg().setProperty("/ui/regions", aFilteredRegions);
-            } else {
-                this._reg().setProperty("/ui/regions", []);
-            }
+                })
+                : []);
         },
 
         onBasicFieldChange: function () { this._validateStep(); },

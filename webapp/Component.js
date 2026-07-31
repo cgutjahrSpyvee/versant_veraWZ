@@ -25,8 +25,12 @@ sap.ui.define([
             this.setModel(models.createDeviceModel(), "device");
             this.setModel(models.createRegistrationModel(), "reg");
             this.setModel(models.createInboxModel(), "inbox");
+            this.setModel(models.createRefModel(), "ref");
 
             this._veraService = VeRAService.getInstance();
+
+            // Country/region lists are fetched once for the app's lifetime.
+            this._pRefData = this.loadReferenceData();
 
             this.getRouter().initialize();
 
@@ -98,6 +102,52 @@ sap.ui.define([
             });
 
             return oDeferred.promise();
+        },
+
+        /**
+         * Fills the "ref" model with the country and region lists. Owned by the
+         * Component rather than the Basic step because the step's onInit runs
+         * only once — the wizard view is cached by the router — while the reg
+         * model it used to write into is rebuilt on every entry.
+         *
+         * Resolves once both requests have settled; a failure is logged and
+         * leaves that list empty rather than blocking the step.
+         *
+         * @returns {jQuery.Promise} resolves with no value; never rejects
+         */
+        loadReferenceData: function () {
+            var oRef = this.getModel("ref");
+            var oSvc = this._veraService;
+
+            var pCountries = oSvc.getCountries()
+                .done(function (aCountries) {
+                    oRef.setProperty("/countries", aCountries || []);
+                })
+                .fail(function () {
+                    Log.error("Component: failed to load the country list.");
+                });
+
+            var pRegions = oSvc.getAllRegionData()
+                .done(function (aRegions) {
+                    oRef.setProperty("/allRegions", aRegions || []);
+                })
+                .fail(function () {
+                    Log.error("Component: failed to load the region list.");
+                });
+
+            var oDeferred = jQuery.Deferred();
+            jQuery.when(pCountries, pRegions).always(function () {
+                oDeferred.resolve();
+            });
+            return oDeferred.promise();
+        },
+
+        /**
+         * Resolves once loadReferenceData has settled, so steps can filter
+         * against the lists without racing the initial fetch.
+         */
+        getReferenceData: function () {
+            return this._pRefData || jQuery.Deferred().resolve().promise();
         },
 
         // Drive the Status page's ObjectHeader from the most recent invite.
@@ -185,6 +235,34 @@ sap.ui.define([
                 /* outside FLP — no user info */
                 oDeferred.resolve({ name: "", email: "" });
             }
+        },
+
+        /**
+         * TEST ONLY — replaces the signed-in user's email so the invite list
+         * can be pulled for somebody else without re-authenticating. Overrides
+         * the cached UserInfo promise (which is what loadInvites reads), keeps
+         * the reg model in step, and refetches.
+         *
+         * @param {string} sEmail email to impersonate
+         * @returns {jQuery.Promise} resolves with the refetched invite rows
+         */
+        setTestUserEmail: function (sEmail) {
+            var oReg  = this.getModel("reg");
+            var sName = oReg.getProperty("/userName") || "";
+
+            this._pUserInfo = jQuery.Deferred()
+                .resolve({ name: sName, email: sEmail }).promise();
+            oReg.setProperty("/userEmail", sEmail);
+
+            // The primary contact was seeded from the old email; while it is
+            // still the only, untouched contact, keep it pointing at the user.
+            var aContacts = oReg.getProperty("/contacts/items");
+            if (aContacts && aContacts.length === 1) {
+                oReg.setProperty("/contacts/items/0/email", sEmail);
+            }
+
+            Log.info("Component: test user email set to " + sEmail);
+            return this.loadInvites();
         },
 
         // Pre-populate the primary (first) contact with the current user's

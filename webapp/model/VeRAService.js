@@ -200,6 +200,8 @@ sap.ui.define([
         /** One inviteData row → the shape the Home and Status tables bind to. */
         mapInviteRow: function (oInv) {
             return {
+                // ZZSF_VRA_EMLID is the request id — what the Home column shows
+                // and what attachments are keyed off.
                 id:      oInv.ZZSF_VRA_EMLID || "",
                 name:    oInv.VEND_NAME      || "",
                 type:    oInv.VEND_DESC      || "",
@@ -278,6 +280,39 @@ sap.ui.define([
         },
 
         // ── File operations (GOS attachments) ───────────────────────────
+
+        /**
+         * Single entry point for every registration attachment, so the object
+         * key can't be filled in inconsistently — or forgotten — per call site.
+         *
+         * managecsdoc keys the stored document off "id" (the request number;
+         * managecsdoc.java reads it into objectKey, and the portal UI sends
+         * $("#requestId").val() there). vendorId is the fallback the portal
+         * added for uploads made before a request exists — see the
+         * DFCT0013688 comments in managecsdoc.java.
+         *
+         * @param {File}   oFile     the file to store
+         * @param {string} sFileType W9 | 590 | ACH | W8 | LEG | SUP
+         * @param {object} oRegData  reg model data — supplies requestId/vendorId
+         */
+        uploadRegistrationFile: function (oFile, sFileType, oRegData) {
+            oRegData = oRegData || {};
+
+            if (!oRegData.requestId && !oRegData.vendorId) {
+                // The backend has nothing to hang the document off; it will
+                // either reject it or file it against a blank key.
+                Log.error("VeRAService: uploading " + sFileType +
+                          " with neither a request id nor a vendor id.");
+            }
+
+            return this.uploadFile(
+                oFile,
+                oRegData.requestId,
+                "ZSVRA_REQ",
+                sFileType,
+                oRegData.vendorId
+            );
+        },
 
         uploadFile: function (oFile, sObjectKey, sObjectType, sFileType, sVendorId) {
             var oFormData = new FormData();
