@@ -73,7 +73,9 @@
                 <items>
                     <ColumnListItem type="Navigation">
                         <cells>
-                            <ObjectIdentifier title="{inbox>id}" text="{inbox>type}"/>
+                            <!-- reqId is REQST, joined in from vadminData; the
+                                 invitation's own id is inbox>id. -->
+                            <ObjectIdentifier title="{inbox>reqId}" text="{inbox>type}"/>
                             <Text text="{inbox>name}"/>
                             <ObjectStatus
                                 text="{inbox>status/text}"
@@ -84,6 +86,20 @@
                 </items>
             </Table>
         </content>
+
+        <!-- Build identity, so a user can say exactly what they are looking at.
+             Text is set in Home.controller.onInit from model/appInfo.js. -->
+        <footer>
+            <OverflowToolbar>
+                <ToolbarSpacer/>
+                <Button
+                    id="appVersionButton"
+                    type="Transparent"
+                    icon="sap-icon://information"
+                    tooltip="{i18n>aboutTooltip}"
+                    press=".onShowAppInfo"/>
+            </OverflowToolbar>
+        </footer>
 
     </Page>
 

@@ -197,12 +197,50 @@ sap.ui.define([
             return jQuery.extend({ code: sKey }, oEntry);
         },
 
-        /** One inviteData row → the shape the Home and Status tables bind to. */
-        mapInviteRow: function (oInv) {
+        /**
+         * A whole inviteInfo response → the rows the Home and Status tables
+         * bind to.
+         *
+         * The request number is not on the invite row: REQST lives on the
+         * vadminData records, which carry ZZSF_VRA_EMLID as the join key. An
+         * invite with no vadminData match simply has no request yet, and gets
+         * an empty reqId rather than a missing property.
+         *
+         * @param   {object} oData the { inviteData, vadminData } response
+         * @returns {object[]} mapped rows, in the order the backend returned them
+         */
+        mapInvites: function (oData) {
+            var aInvites = (oData && oData.inviteData) || [];
+            var aVAdmin  = (oData && oData.vadminData) || [];
+
+            var mRequestByInvite = {};
+            aVAdmin.forEach(function (oRow) {
+                if (oRow && oRow.ZZSF_VRA_EMLID && oRow.REQST) {
+                    mRequestByInvite[oRow.ZZSF_VRA_EMLID] = oRow.REQST;
+                }
+            });
+
+            return aInvites.map(function (oInv) {
+                return this.mapInviteRow(
+                    oInv,
+                    mRequestByInvite[oInv.ZZSF_VRA_EMLID] || ""
+                );
+            }, this);
+        },
+
+        /**
+         * One inviteData row → a table row.
+         *
+         * @param {object} oInv       raw inviteData record
+         * @param {string} sRequestId REQST for this invite, "" if none yet
+         */
+        mapInviteRow: function (oInv, sRequestId) {
             return {
-                // ZZSF_VRA_EMLID is the request id — what the Home column shows
-                // and what attachments are keyed off.
+                // The invitation's own id. Distinct from reqId below.
                 id:      oInv.ZZSF_VRA_EMLID || "",
+                // REQST, joined in from vadminData — the request number the
+                // backend keys attachments and saves off.
+                reqId:   sRequestId          || "",
                 name:    oInv.VEND_NAME      || "",
                 type:    oInv.VEND_DESC      || "",
                 contact: [oInv.FIRST_NAME, oInv.LAST_NAME].filter(Boolean).join(" "),

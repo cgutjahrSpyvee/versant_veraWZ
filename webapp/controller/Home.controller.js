@@ -5,8 +5,12 @@ sap.ui.define([
     "sap/m/Input",
     "sap/m/Label",
     "sap/m/MessageToast",
-    "vsnt/vera/model/models"
-], function (Controller, Dialog, Button, Input, Label, MessageToast, models) {
+    "sap/m/Text",
+    "sap/ui/layout/form/SimpleForm",
+    "vsnt/vera/model/models",
+    "vsnt/vera/model/appInfo"
+], function (Controller, Dialog, Button, Input, Label, MessageToast, Text,
+             SimpleForm, models, appInfo) {
     "use strict";
 
     var rEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,6 +22,87 @@ sap.ui.define([
             // return to Home so a just-submitted invite shows up.
             this.getOwnerComponent().getRouter()
                 .getRoute("home").attachPatternMatched(this._onRouteMatched, this);
+
+            this._showVersionOnButton();
+        },
+
+        // The version label is the whole point of the footer button, so show it
+        // as soon as it is known and again once the build stamp arrives.
+        _showVersionOnButton: function () {
+            var that     = this;
+            var oButton  = this.byId("appVersionButton");
+            var oAppInfo = appInfo.get(this.getOwnerComponent());
+
+            oButton.setText("v" + (oAppInfo.version || "?"));
+            appInfo.loadBuildTime().done(function () {
+                oButton.setTooltip(appInfo.format(that._appInfo()));
+            });
+        },
+
+        _appInfo: function () {
+            return appInfo.get(this.getOwnerComponent());
+        },
+
+        /**
+         * Full build identity. The summary sits in a text field rather than
+         * behind a Copy button because the Clipboard API is off limits here
+         * (@sap-ux/fiori-tools/sap-no-navigator) — a selectable field lets the
+         * user copy it with the keyboard instead of reading a token out
+         * character by character.
+         */
+        onShowAppInfo: function () {
+            var that     = this;
+            var oBundle  = this.getOwnerComponent().getModel("i18n").getResourceBundle();
+            var oAppInfo = this._appInfo();
+
+            if (this._oAppInfoDialog) { this._oAppInfoDialog.destroy(); }
+
+            var aRows = [
+                [oBundle.getText("aboutVersion"),   oAppInfo.version    || "—"],
+                [oBundle.getText("aboutBuild"),     oAppInfo.buildToken || "—"],
+                [oBundle.getText("aboutBuiltAt"),   oAppInfo.buildTime  || "—"],
+                [oBundle.getText("aboutAppPath"),   oAppInfo.appSegment || "—"]
+            ];
+
+            var aContent = [];
+            aRows.forEach(function (aRow) {
+                aContent.push(new Label({ text: aRow[0] }));
+                aContent.push(new Text({ text: aRow[1] })
+                    .addStyleClass("sapUiTinyMarginBottom"));
+            });
+
+            aContent.push(new Label({ text: oBundle.getText("aboutReportThis") }));
+            aContent.push(new Input({
+                value: appInfo.format(oAppInfo),
+                width: "100%",
+                // Left editable so the text can be selected and copied; the
+                // dialog is thrown away on close, so edits go nowhere.
+                tooltip: oBundle.getText("aboutReportThis")
+            }));
+
+            this._oAppInfoDialog = new Dialog({
+                title: oBundle.getText("aboutTitle"),
+                contentWidth: "24rem",
+                content: [
+                    new SimpleForm({
+                        editable: true,
+                        layout: "ResponsiveGridLayout",
+                        labelSpanXL: 4, labelSpanL: 4, labelSpanM: 4, labelSpanS: 4,
+                        content: aContent
+                    })
+                ],
+                endButton: new Button({
+                    text: oBundle.getText("btnClose"),
+                    press: function () { that._oAppInfoDialog.close(); }
+                }),
+                afterClose: function () {
+                    that._oAppInfoDialog.destroy();
+                    that._oAppInfoDialog = null;
+                }
+            }).addStyleClass(this.getOwnerComponent().getContentDensityClass());
+
+            this.getView().addDependent(this._oAppInfoDialog);
+            this._oAppInfoDialog.open();
         },
 
         _onRouteMatched: function () {
@@ -108,7 +193,9 @@ sap.ui.define([
             var sEmail     = oComponent.getModel("reg").getProperty("/userEmail");
 
             oComponent.getModel("reg").setData(
-                models.createRegistrationModelFromInvite(oRow.invite, sEmail).getData()
+                models.createRegistrationModelFromInvite(
+                    oRow.invite, sEmail, oRow.reqId
+                ).getData()
             );
             oComponent.getRouter().navTo("register", { mode: "register" });
         }

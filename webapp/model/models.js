@@ -37,6 +37,9 @@ sap.ui.define([
 
                 ui: {
                     busy:                       false,
+                    paymentMethods:             [],    // [{key,text}] allowed for this vendor type
+                    paymentMethodLocked:        false, // vendor type offers no choice
+                    bankCountryEditable:        true,
                     newNotificationEmail:       "",
                     notificationEmailError:     false,
                     basicTouched:               false,
@@ -98,6 +101,8 @@ sap.ui.define([
                     primaryAccount: {
                         method:        "ACH",
                         country:       "US",
+                        bvtyp:         "",   // BVTYP of an existing bank record, if any
+
                         routingNum:    "",
                         accountNum:    "",
                         holderName:    "",
@@ -121,18 +126,20 @@ sap.ui.define([
          * clicked. Field pairings follow the portal's maintain_invite.java,
          * which reads the same inviteData record.
          *
-         * @param {object} oInv   raw inviteData row
-         * @param {string} sEmail signed-in user's email — the invite is keyed
-         *                        on it, so it doubles as the contact address
+         * @param {object} oInv       raw inviteData row
+         * @param {string} sEmail     signed-in user's email — the invite is keyed
+         *                            on it, so it doubles as the contact address
+         * @param {string} sRequestId REQST for this invite. Passed in rather than
+         *                            read off oInv because it lives on the
+         *                            response's vadminData records, not on the
+         *                            invite row — VeRAService.mapInvites joins them.
          */
-        createRegistrationModelFromInvite: function (oInv, sEmail) {
+        createRegistrationModelFromInvite: function (oInv, sEmail, sRequestId) {
             var oModel = this.createRegistrationModel();
             var oData  = oModel.getData();
 
             oData.mode         = "register";
-            // ZZSF_VRA_EMLID is the request id despite the field name, and it
-            // is what managecsdoc expects as "id" when storing attachments.
-            oData.requestId    = oInv.ZZSF_VRA_EMLID  || null;
+            oData.requestId    = sRequestId           || null;
             oData.inviteId     = oInv.ZZSF_VRA_EMLID  || null;
             oData.vendorId     = oInv.LIFNR           || null;
             oData.vendorType   = oInv.VEND_TYPE       || "";

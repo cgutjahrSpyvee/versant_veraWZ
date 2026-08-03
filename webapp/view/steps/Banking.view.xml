@@ -18,21 +18,24 @@
 
             <f:content>
                 <Label text="{i18n>paymentMethod}" required="true"/>
+                <!-- Which methods are offered depends on the vendor type — see
+                     model/paymentMethods.js, filled by Banking.controller. -->
                 <SegmentedButton
                     id="primaryMethodToggle"
                     selectedKey="{reg>/banking/primaryAccount/method}"
-                    selectionChange=".onPrimaryMethodChange">
+                    enabled="{= !${reg>/ui/paymentMethodLocked} }"
+                    selectionChange=".onPrimaryMethodChange"
+                    items="{reg>/ui/paymentMethods}">
                     <items>
-                        <SegmentedButtonItem key="ACH"   text="ACH"/>
-                        <SegmentedButtonItem key="Wire"  text="Wire"/>
-                        <SegmentedButtonItem key="Check" text="Check"/>
+                        <SegmentedButtonItem key="{reg>key}" text="{reg>text}"/>
                     </items>
                 </SegmentedButton>
 
                 <!-- Bank country - hidden for US-only scope, will be re-enabled for international -->
                 <Label text="{i18n>bankCountry}" required="true" visible="false"/>
                 <Select id="primaryCountry" selectedKey="{reg>/banking/primaryAccount/country}"
-                        change=".onBankingFieldChange" visible="false">
+                        change=".onBankingFieldChange" visible="false"
+                        enabled="{reg>/ui/bankCountryEditable}">
                     <items>
                         <core:Item key="US"    text="United States"/>
                         <core:Item key="CA"    text="Canada"/>
@@ -135,11 +138,13 @@
 
                         <f:content>
                             <Label text="{i18n>paymentMethod}" required="true"/>
-                            <SegmentedButton selectedKey="{reg>method}">
+                            <!-- Same vendor type, so the same allowed set as the
+                                 primary account. -->
+                            <SegmentedButton
+                                selectedKey="{reg>method}"
+                                items="{reg>/ui/paymentMethods}">
                                 <items>
-                                    <SegmentedButtonItem key="ACH"   text="ACH"/>
-                                    <SegmentedButtonItem key="Wire"  text="Wire"/>
-                                    <SegmentedButtonItem key="Check" text="Check"/>
+                                    <SegmentedButtonItem key="{reg>key}" text="{reg>text}"/>
                                 </items>
                             </SegmentedButton>
 

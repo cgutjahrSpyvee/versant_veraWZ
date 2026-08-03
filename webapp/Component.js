@@ -8,8 +8,9 @@ sap.ui.define([
     "sap/m/MessageBox",
     "sap/base/Log",
     "vsnt/vera/model/models",
-    "vsnt/vera/model/VeRAService"
-], function (UIComponent, Device, MessageBox, Log, models, VeRAService) {
+    "vsnt/vera/model/VeRAService",
+    "vsnt/vera/model/appInfo"
+], function (UIComponent, Device, MessageBox, Log, models, VeRAService, appInfo) {
     "use strict";
 
     return UIComponent.extend("vsnt.vera.Component", {
@@ -31,6 +32,13 @@ sap.ui.define([
 
             // Country/region lists are fetched once for the app's lifetime.
             this._pRefData = this.loadReferenceData();
+
+            // Stamp the build into the console as well as the About dialog, so
+            // a support session can start from a screenshot of either.
+            var oAppInfo = appInfo.get(this);
+            appInfo.loadBuildTime().done(function () {
+                Log.info("VeRA " + appInfo.format(oAppInfo));
+            });
 
             this.getRouter().initialize();
 
@@ -81,13 +89,22 @@ sap.ui.define([
                 oSvc.getInviteInfo(oUser.email)
                     .done(function (oData) {
                         if (oData && oData.code !== "0") {
-                            fnDone([], oData.message || "Could not load your invitations.");
+                            // An empty inbox comes back as a non-zero code with
+                            // "No Data Available" rather than an empty list, and
+                            // having no invitations is not an error the user has
+                            // to dismiss — the Home list says so on its own. Any
+                            // such response carries no rows, so show the empty
+                            // state and leave the backend message in the log.
+                            Log.warning("Component: inviteInfo returned code '" +
+                                oData.code + "' — " + (oData.message || "no message"));
+                            fnDone([]);
                             return;
                         }
                         var aItems;
                         try {
-                            aItems = ((oData && oData.inviteData) || [])
-                                .map(oSvc.mapInviteRow, oSvc);
+                            // Whole response, not just inviteData — the request
+                            // numbers are joined in from vadminData.
+                            aItems = oSvc.mapInvites(oData);
                         } catch (e) {
                             Log.error("Component: failed to map invite data — " + e.message);
                             fnDone([], "Could not read your invitations.");
@@ -156,7 +173,10 @@ sap.ui.define([
             var oLatest = aItems[0];
             var oReg    = this.getModel("reg");
             oReg.setProperty("/status", oLatest.status.reg);
-            if (oLatest.id) { oReg.setProperty("/requestId", oLatest.id); }
+            // reqId (REQST), not id — /requestId is the request number that
+            // attachment uploads and saves are keyed off. Left alone when the
+            // invite has no request yet, so a later one is not clobbered.
+            if (oLatest.reqId) { oReg.setProperty("/requestId", oLatest.reqId); }
         },
 
         _setShellTitle: function (sTitle) {
