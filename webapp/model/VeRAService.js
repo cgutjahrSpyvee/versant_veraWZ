@@ -323,43 +323,58 @@ sap.ui.define([
          * Single entry point for every registration attachment, so the object
          * key can't be filled in inconsistently — or forgotten — per call site.
          *
-         * managecsdoc keys the stored document off "id" (the request number;
-         * managecsdoc.java reads it into objectKey, and the portal UI sends
-         * $("#requestId").val() there). vendorId is the fallback the portal
-         * added for uploads made before a request exists — see the
-         * DFCT0013688 comments in managecsdoc.java.
+         * Attachments are keyed on the request id alone: managecsdoc reads the
+         * "id" form field into objectKey, and the document id it returns is
+         * what later travels to Z_SFI_I508_VRA_VENSAVE as an ET_FILES row
+         * (OBJECT_ID = this id, REQST = the request id, FILE_TYPE = sFileType).
+         * See buildSavePayload for the *FileInfo fields that carry it.
          *
-         * @param {File}   oFile     the file to store
-         * @param {string} sFileType W9 | 590 | ACH | W8 | LEG | SUP
-         * @param {object} oRegData  reg model data — supplies requestId/vendorId
+         * Without a request id there is nothing to hang the document off, so
+         * the upload is refused rather than filed against a blank key.
+         *
+         * A response without a document id means the attachment was never
+         * filed — ZZFI_I508_VERA_ATTACHMENT_SAVE returned no E_ATTACHMENT_ID,
+         * or managecsdoc wrote "Error:…" instead of its JSON. Rejecting here
+         * keeps the caller from reporting success on an id it can't send.
+         *
+         * @param   {File}   oFile     the file to store
+         * @param   {string} sFileType W9 | 590 | ACH | W8 | LEG | SUP
+         * @param   {object} oRegData  reg model data — supplies requestId
+         * @returns {jQuery.Promise} rejects immediately when no request id
          */
         uploadRegistrationFile: function (oFile, sFileType, oRegData) {
-            oRegData = oRegData || {};
+            var oData = oRegData || {};
 
-            if (!oRegData.requestId && !oRegData.vendorId) {
-                // The backend has nothing to hang the document off; it will
-                // either reject it or file it against a blank key.
-                Log.error("VeRAService: uploading " + sFileType +
-                          " with neither a request id nor a vendor id.");
+            if (!oData.requestId) {
+                Log.error("VeRAService: refusing to upload " + sFileType +
+                          " — no request id on the registration.");
+                return jQuery.Deferred()
+                    .reject(null, "error", "missing request id").promise();
             }
 
-            return this.uploadFile(
-                oFile,
-                oRegData.requestId,
-                "ZSVRA_REQ",
-                sFileType,
-                oRegData.vendorId
-            );
+            return this.uploadFile(oFile, oData.requestId, "ZSVRA_REQ", sFileType)
+                .then(function (oResult) {
+                    if (!oResult || !oResult.id) {
+                        Log.error("VeRAService: managecsdoc returned no document id for " +
+                                  sFileType + " — " + JSON.stringify(oResult));
+                        return jQuery.Deferred()
+                            .reject(null, "error", "no document id").promise();
+                    }
+                    return oResult;
+                });
         },
 
-        uploadFile: function (oFile, sObjectKey, sObjectType, sFileType, sVendorId) {
+        uploadFile: function (oFile, sObjectKey, sObjectType, sFileType) {
             var oFormData = new FormData();
             oFormData.append("action",   "upload");
             oFormData.append("id",       sObjectKey  || "");
             oFormData.append("objtype",  sObjectType || "ZSVRA_REQ");
             oFormData.append("fileType", sFileType   || "");
-            oFormData.append("vendorId", sVendorId   || "");
-            oFormData.append("filename", oFile.name);
+            // No "filename" field: managecsdoc takes the name off the file part
+            // itself, and only when it hasn't already seen a filename form
+            // field — sending both makes it re-append the extension ("W9.pdf"
+            // stored as "W9.pdf.pdf"). The portal's own uploader sends only
+            // id/objtype/action/fileType (vendor.js registerFileUploads).
             oFormData.append("file",     oFile, oFile.name);
 
             return jQuery.ajax({
@@ -368,6 +383,10 @@ sap.ui.define([
                 data: oFormData,
                 processData: false,
                 contentType: false,
+                // managecsdoc writes its JSON through a plain PrintWriter with
+                // no content type, so jQuery would otherwise hand back a
+                // string and every .id read would come out undefined.
+                dataType: "json",
                 headers: this._csrfHeaders()
             });
         },
@@ -481,6 +500,12 @@ sap.ui.define([
                     facta:                  oTax.factaCode      || "",
                     independantContractor:  oTax.independentContractor || "",
                     taxSsn:                 oTax.ssnNumber      || "",
+
+                    // *FileInfo carry the managecsdoc document ids. Each
+                    // non-empty one becomes an ET_FILES row on
+                    // Z_SFI_I508_VRA_VENSAVE — OBJECT_ID = the id, REQST = the
+                    // request id, FILE_TYPE = W9/590/W8/LEG/SUP. objectactions
+                    // skips any whose length is <= 1, so "" means "no file".
                     w9FileInfo:             oTax.w9DocId        || "",
                     "590FileInfo":          oTax.doc590Id       || "",
                     w8FileInfo:             oTax.w8DocId        || "",
