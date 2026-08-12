@@ -4,7 +4,8 @@
     xmlns="sap.m"
     xmlns:f="sap.ui.layout.form"
     xmlns:u="sap.ui.unified"
-    xmlns:core="sap.ui.core">
+    xmlns:core="sap.ui.core"
+    core:require="{ mask: 'vsnt/vera/model/mask' }">
 
     <VBox class="sapUiMediumMargin">
 
@@ -33,8 +34,12 @@
 
                 <!-- Bank country - hidden for US-only scope, will be re-enabled for international -->
                 <Label text="{i18n>bankCountry}" required="true" visible="false"/>
+                <!-- forceSelection="false": a loaded request can carry a bank
+                     country outside this list, and the default would silently
+                     rewrite it to US. Applies even while hidden. -->
                 <Select id="primaryCountry" selectedKey="{reg>/banking/primaryAccount/country}"
                         change=".onBankingFieldChange" visible="false"
+                        forceSelection="false"
                         enabled="{= ${reg>/ui/editable} &amp;&amp; ${reg>/ui/bankCountryEditable} }">
                     <items>
                         <core:Item key="US"    text="United States"/>
@@ -47,38 +52,44 @@
                     </items>
                 </Select>
 
+                <!-- Check payments need no account details, but a read-only
+                     request still shows any that were captured. -->
                 <Label text="{i18n>bankRoutingNum}" required="true"
-                       visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"/>
+                       visible="{= ${reg>/banking/primaryAccount/method} !== 'Check' || (!${reg>/ui/editable} &amp;&amp; !!${reg>/banking/primaryAccount/routingNum}) }"/>
                 <Input
                     id="primaryRouting"
                     value="{reg>/banking/primaryAccount/routingNum}"
                     valueState="{= ${reg>/ui/bankingTouched} &amp;&amp; ${reg>/banking/primaryAccount/method} !== 'Check' &amp;&amp; !${reg>/banking/primaryAccount/routingNum} ? 'Error' : 'None'}"
                     valueStateText="Routing Number is required"
                     maxLength="9"
-                    visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
+                    visible="{= ${reg>/banking/primaryAccount/method} !== 'Check' || (!${reg>/ui/editable} &amp;&amp; !!${reg>/banking/primaryAccount/routingNum}) }"
                     editable="{reg>/ui/editable}"
                     liveChange=".onBankingFieldChange"/>
 
                 <Label text="{i18n>bankAccountNum}" required="true"
-                       visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"/>
+                       visible="{= ${reg>/banking/primaryAccount/method} !== 'Check' || (!${reg>/ui/editable} &amp;&amp; !!${reg>/banking/primaryAccount/accountNum}) }"/>
+                <!-- Editable Input / masked Text pair — see the same pattern
+                     on the tax numbers in Tax.view.xml. -->
                 <Input
                     id="primaryAccountNum"
                     value="{reg>/banking/primaryAccount/accountNum}"
                     valueState="{= ${reg>/ui/bankingTouched} &amp;&amp; ${reg>/banking/primaryAccount/method} !== 'Check' &amp;&amp; !${reg>/banking/primaryAccount/accountNum} ? 'Error' : 'None'}"
                     valueStateText="Account Number is required"
                     maxLength="17"
-                    visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
-                    editable="{reg>/ui/editable}"
+                    visible="{= ${reg>/ui/editable} &amp;&amp; ${reg>/banking/primaryAccount/method} !== 'Check' }"
                     liveChange=".onBankingFieldChange"/>
+                <Text
+                    text="{ path: 'reg>/banking/primaryAccount/accountNum', formatter: 'mask.account' }"
+                    visible="{= !${reg>/ui/editable} &amp;&amp; !!${reg>/banking/primaryAccount/accountNum} }"/>
 
                 <Label text="{i18n>accountHolderName}" required="true"
-                       visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"/>
+                       visible="{= ${reg>/banking/primaryAccount/method} !== 'Check' || (!${reg>/ui/editable} &amp;&amp; !!${reg>/banking/primaryAccount/holderName}) }"/>
                 <Input
                     id="primaryHolderName"
                     value="{reg>/banking/primaryAccount/holderName}"
                     valueState="{= ${reg>/ui/bankingTouched} &amp;&amp; ${reg>/banking/primaryAccount/method} !== 'Check' &amp;&amp; !${reg>/banking/primaryAccount/holderName} ? 'Error' : 'None'}"
                     valueStateText="Account Holder Name is required"
-                    visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
+                    visible="{= ${reg>/banking/primaryAccount/method} !== 'Check' || (!${reg>/ui/editable} &amp;&amp; !!${reg>/banking/primaryAccount/holderName}) }"
                     editable="{reg>/ui/editable}"
                     liveChange=".onBankingFieldChange"/>
 
@@ -92,11 +103,19 @@
                         maximumFileSize="10"
                         change=".onPrimaryBankFileChange"
                         buttonText="{i18n>chooseFile}"/>
+                    <!-- Link once the document is stored on the request; a
+                         just-uploaded file has no displaycsdoc URL yet. -->
+                    <Link
+                        text="{reg>/banking/primaryAccount/bankFileName}"
+                        href="{reg>/banking/primaryAccount/bankFileUrl}"
+                        target="_blank"
+                        visible="{= !!${reg>/banking/primaryAccount/bankFileUrl}}"
+                        class="sapUiSmallMarginBegin"/>
                     <ObjectStatus
                         text="{reg>/banking/primaryAccount/bankFileName}"
                         state="Success"
                         icon="sap-icon://document"
-                        visible="{= !!${reg>/banking/primaryAccount/bankFileName}}"
+                        visible="{= !!${reg>/banking/primaryAccount/bankFileName} &amp;&amp; !${reg>/banking/primaryAccount/bankFileUrl}}"
                         class="sapUiSmallMarginBegin"/>
                 </HBox>
 
@@ -108,7 +127,10 @@
             </f:content>
         </f:SimpleForm>
 
-        <Panel headerText="{i18n>secondaryAccounts}" expandable="true" expanded="false">
+        <!-- Collapsed only while empty, so a read-only request never buries
+             accounts behind a closed panel — same as secondary addresses. -->
+        <Panel headerText="{i18n>secondaryAccounts}" expandable="true"
+               expanded="{= ${reg>/banking/secondaryAccounts}.length > 0 }">
 
             <headerToolbar>
                 <OverflowToolbar>
@@ -158,6 +180,7 @@
                             <!-- Bank country - hidden for US-only scope -->
                             <Label text="{i18n>bankCountry}" required="true" visible="false"/>
                             <Select selectedKey="{reg>country}" visible="false"
+                                    forceSelection="false"
                                     enabled="{reg>/ui/editable}">
                                 <items>
                                     <core:Item key="US"    text="United States"/>
@@ -182,7 +205,8 @@
             </List>
         </Panel>
 
-        <Panel headerText="{i18n>paymentNotifications}" expandable="true" expanded="false">
+        <Panel headerText="{i18n>paymentNotifications}" expandable="true"
+               expanded="{= ${reg>/banking/paymentNotifications}.length > 0 }">
 
             <VBox class="sapUiMediumMargin">
                 <HBox alignItems="End" visible="{reg>/ui/editable}">

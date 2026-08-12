@@ -47,6 +47,17 @@ sap.ui.define([
             var sType    = oReg.getProperty("/vendorType") || "";
             var oPrim    = oReg.getProperty("/banking/primaryAccount") || {};
             var aOptions = paymentMethods.getOptions(sType);
+            var sDefault = paymentMethods.getDefault(
+                sType, oPrim.country, oPrim.bvtyp, !!oPrim.bvtyp);
+
+            // With no choice on offer the single option has to be the default
+            // itself. getOptions hardcodes Check for that type while getDefault
+            // can resolve to ACH, and the resulting mismatch would have the
+            // SegmentedButton force-select its only item and write it back over
+            // whatever the request actually carries.
+            if (paymentMethods.isLocked(sType) && sDefault) {
+                aOptions = [{ key: sDefault, text: sDefault }];
+            }
 
             oReg.setProperty("/ui/paymentMethods", aOptions);
             oReg.setProperty("/ui/paymentMethodLocked", paymentMethods.isLocked(sType));
@@ -55,8 +66,7 @@ sap.ui.define([
                 return o.key === oPrim.method;
             });
             if (!bStillValid) {
-                oReg.setProperty("/banking/primaryAccount/method",
-                    paymentMethods.getDefault(sType, oPrim.country, oPrim.bvtyp, !!oPrim.bvtyp));
+                oReg.setProperty("/banking/primaryAccount/method", sDefault);
             }
 
             this._applyCountryRules();
@@ -116,8 +126,10 @@ sap.ui.define([
             aAccts.push({
                 method: sMethod,
                 country: oRule.country === null ? "US" : oRule.country,
+                bvtyp: "",
                 routingNum: "", accountNum: "", holderName: "",
-                swiftNum: "", ibanNum: "", bankFileName: "", bankDocId: ""
+                swiftNum: "", ibanNum: "",
+                bankFileName: "", bankDocId: "", bankFileUrl: ""
             });
             this._reg().setProperty("/banking/secondaryAccounts", aAccts);
         },
@@ -155,6 +167,11 @@ sap.ui.define([
         },
 
         _validateStep: function () {
+            // A read-only request is being read, not filled in. Registration
+            // marks every step valid up front so the wizard can be paged
+            // through; recomputing here would undo that and strand the user.
+            if (!this._reg().getProperty("/ui/editable")) { return true; }
+
             var oP = this._reg().getProperty("/banking/primaryAccount");
             var aMissing = [];
             if (oP.method !== "Check") {

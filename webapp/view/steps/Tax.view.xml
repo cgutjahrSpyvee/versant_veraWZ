@@ -4,7 +4,8 @@
     xmlns="sap.m"
     xmlns:f="sap.ui.layout.form"
     xmlns:u="sap.ui.unified"
-    xmlns:core="sap.ui.core">
+    xmlns:core="sap.ui.core"
+    core:require="{ mask: 'vsnt/vera/model/mask' }">
 
     <VBox class="sapUiMediumMargin">
 
@@ -67,11 +68,20 @@
                         change=".onW9FileChange"
                         typeMismatch=".onFileTypeMismatch"
                         buttonText="{i18n>chooseFile}"/>
+                    <!-- A document already stored on the request is a link;
+                         one the user has just uploaded this session has no
+                         displaycsdoc URL yet, so it stays a plain status. -->
+                    <Link
+                        text="{reg>/tax/w9FileName}"
+                        href="{reg>/tax/w9Url}"
+                        target="_blank"
+                        visible="{= !!${reg>/tax/w9Url}}"
+                        class="sapUiSmallMarginBegin"/>
                     <ObjectStatus
                         text="{reg>/tax/w9FileName}"
                         state="Success"
                         icon="sap-icon://document"
-                        visible="{= !!${reg>/tax/w9FileName}}"
+                        visible="{= !!${reg>/tax/w9FileName} &amp;&amp; !${reg>/tax/w9Url}}"
                         class="sapUiSmallMarginBegin"/>
                 </HBox>
 
@@ -88,7 +98,7 @@
             type="Warning"
             showIcon="true"
             showCloseButton="false"
-            visible="{= !${reg>/tax/isUSPerson}}"
+            visible="{= !${reg>/tax/isUSPerson} || (!${reg>/ui/editable} &amp;&amp; !!${reg>/tax/doc590Name}) }"
             class="sapUiMediumMarginTopBottom"/>
 
         <f:SimpleForm
@@ -98,7 +108,7 @@
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
             columnsXL="1" columnsL="1" columnsM="1"
-            visible="{= !${reg>/tax/isUSPerson}}">
+            visible="{= !${reg>/tax/isUSPerson} || (!${reg>/ui/editable} &amp;&amp; !!${reg>/tax/doc590Name}) }">
 
             <f:content>
                 <Label text="{i18n>upload590}"/>
@@ -112,20 +122,27 @@
                         change=".on590FileChange"
                         typeMismatch=".onFileTypeMismatch"
                         buttonText="{i18n>chooseFile}"/>
+                    <Link
+                        text="{reg>/tax/doc590Name}"
+                        href="{reg>/tax/doc590Url}"
+                        target="_blank"
+                        visible="{= !!${reg>/tax/doc590Url}}"
+                        class="sapUiSmallMarginBegin"/>
                     <ObjectStatus
                         text="{reg>/tax/doc590Name}"
                         state="Success"
                         icon="sap-icon://document"
-                        visible="{= !!${reg>/tax/doc590Name}}"
+                        visible="{= !!${reg>/tax/doc590Name} &amp;&amp; !${reg>/tax/doc590Url}}"
                         class="sapUiSmallMarginBegin"/>
                 </HBox>
 
                 <Label text=""/>
+                <!-- sap.m.Link has no icon property in this UI5 version; it
+                     logged an error and rendered nothing. -->
                 <Link
                     text="{i18n>downloadBlank590}"
                     href="/irj/go/km/docs/vsnt_km/Vendor%20Portal/Documents/590_Blank.pdf"
-                    target="_blank"
-                    icon="sap-icon://download"/>
+                    target="_blank"/>
             </f:content>
         </f:SimpleForm>
 
@@ -149,21 +166,29 @@
                     </items>
                 </SegmentedButton>
 
+                <!-- The category picks one of the two in edit mode; a read-only
+                     request shows whichever number it actually carries. -->
                 <Label text="{i18n>enterTaxIDNumber}" required="true"
-                       visible="{= ${reg>/tax/taxCategory} === 'TaxID'}"/>
+                       visible="{= ${reg>/tax/taxCategory} === 'TaxID' || (!${reg>/ui/editable} &amp;&amp; !!${reg>/tax/taxIdNumber}) }"/>
+                <!-- Input while editing, masked Text when read-only. A pair
+                     rather than a formatter on the Input, because a formatted
+                     binding is one-way and would break editing — the model has
+                     to keep the raw number for the save to round-trip. -->
                 <Input
                     id="taxIdNumber"
                     value="{reg>/tax/taxIdNumber}"
                     valueState="{= ${reg>/ui/taxTouched} &amp;&amp; !${reg>/tax/taxIdNumber} ? 'Error' : 'None'}"
                     valueStateText="Tax ID is required"
                     maxLength="10"
-                    visible="{= ${reg>/tax/taxCategory} === 'TaxID'}"
-                    editable="{reg>/ui/editable}"
+                    visible="{= ${reg>/ui/editable} &amp;&amp; ${reg>/tax/taxCategory} === 'TaxID' }"
                     liveChange=".onTaxFieldChange"
                     change=".onTaxIdBlur"/>
+                <Text
+                    text="{ path: 'reg>/tax/taxIdNumber', formatter: 'mask.taxId' }"
+                    visible="{= !${reg>/ui/editable} &amp;&amp; (${reg>/tax/taxCategory} === 'TaxID' || !!${reg>/tax/taxIdNumber}) }"/>
 
                 <Label text="{i18n>enterSSN}" required="true"
-                       visible="{= ${reg>/tax/taxCategory} === 'SSN'}"/>
+                       visible="{= ${reg>/tax/taxCategory} === 'SSN' || (!${reg>/ui/editable} &amp;&amp; !!${reg>/tax/ssnNumber}) }"/>
                 <Input
                     id="ssnNumber"
                     value="{reg>/tax/ssnNumber}"
@@ -171,12 +196,19 @@
                     valueStateText="SSN is required"
                     maxLength="11"
                     type="Password"
-                    visible="{= ${reg>/tax/taxCategory} === 'SSN'}"
-                    editable="{reg>/ui/editable}"
+                    visible="{= ${reg>/ui/editable} &amp;&amp; ${reg>/tax/taxCategory} === 'SSN' }"
                     liveChange=".onTaxFieldChange"/>
+                <Text
+                    text="{ path: 'reg>/tax/ssnNumber', formatter: 'mask.ssn' }"
+                    visible="{= !${reg>/ui/editable} &amp;&amp; (${reg>/tax/taxCategory} === 'SSN' || !!${reg>/tax/ssnNumber}) }"/>
 
+                <!-- forceSelection="false" on both of these: a loaded request
+                     can carry a code this list does not have, and the default
+                     (true) would select the first item and write it back over
+                     the real value. Blank is honest; silently wrong is not. -->
                 <Label text="{i18n>recipientType}" required="true"/>
                 <Select id="recipientType" selectedKey="{reg>/tax/recipientType}"
+                        forceSelection="false"
                         valueState="{= ${reg>/ui/taxTouched} &amp;&amp; !${reg>/tax/recipientType} ? 'Error' : 'None'}"
                         valueStateText="Recipient Type is required"
                         enabled="{reg>/ui/editable}"
@@ -195,6 +227,7 @@
 
                 <Label text="{i18n>exemptPayeeCode}" required="true"/>
                 <Select id="exemptPayee" selectedKey="{reg>/tax/exemptPayeeCode}"
+                        forceSelection="false"
                         valueState="{= ${reg>/ui/taxTouched} &amp;&amp; !${reg>/tax/exemptPayeeCode} ? 'Error' : 'None'}"
                         valueStateText="Exempt Payee Code is required"
                         enabled="{reg>/ui/editable}"

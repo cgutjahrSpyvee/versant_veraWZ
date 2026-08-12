@@ -22,6 +22,7 @@
                     selectedKey="{reg>/paymentTerms/selected}"
                     items="{reg>/paymentTerms/availableTerms}"
                     change=".onPaymentTermSelect"
+                    forceSelection="false"
                     enabled="{reg>/ui/editable}"
                     valueState="{= ${reg>/ui/paymentTermsTouched} &amp;&amp; !${reg>/paymentTerms/selected} ? 'Error' : 'None'}"
                     valueStateText="Payment Term is required">

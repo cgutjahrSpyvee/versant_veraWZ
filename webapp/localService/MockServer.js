@@ -51,6 +51,84 @@ sap.ui.define([
         };
     }
 
+    // ── displayRequest row builders ────────────────────────────────────────
+    // The response is a raw dump of the Z_SFI_I510_VRA_VENDISP export tables,
+    // so each builder is one table row with every field the mapper reads.
+
+    function mockLfa1(o) {
+        return jQuery.extend({
+            MANDT: "", REQST: "", VERSN: "000", SEQNO: "0000000000",
+            NAME1: "", NAME2: "", NAME3: "", LAND1: "", ORT01: "", PSTLZ: "",
+            REGIO: "", STRAS: "", STR_SUPPL1: "", STR_SUPPL2: "",
+            KTOKK: "0001", LIFNR: "", SMTP_ADDR: "", TXJCD: "",
+            STCD1: "", STCD2: "", TELF1: "", TELFX: "", J_1KFREPRE: ""
+        }, o);
+    }
+
+    // BVTYP is the payment method in disguise: 01 = US ACH, U01 = US Wire,
+    // W01 = foreign Wire, and Check writes no row at all.
+    function mockLfbk(sBvtyp, sBankl, sBankn, sKoinh, sBanks) {
+        return {
+            MANDT: "", REQST: "", VERSN: "000",
+            BANKS: sBanks || "US", BANKL: sBankl, BANKN: sBankn,
+            BVTYP: sBvtyp, KOINH: sKoinh, BKREF: "", XEZER: ""
+        };
+    }
+
+    function mockKnvk(sName, sAbtnr, sPhone, sFax, sEmail) {
+        return {
+            MANDT: "100", REQST: "", VERSN: "000", SEQNO: "0000000001",
+            PARNR: "0000000000", KUNNR: "", NAMEV: "", NAME1: sName,
+            ABTNR: sAbtnr, PAFKT: "", LIFNR: "", LOEVM: "", ADRNP_2: "",
+            PRSNR: "", TELF1: sPhone, FAX_NUMBER: sFax, SMTP_ADDR: sEmail
+        };
+    }
+
+    function mockFile(sType, sName, sObjectId) {
+        return {
+            MANDT: "100", REQST: "", FILE_TYPE: sType,
+            ACT_FILE_NAME: sName, OBJECT_ID: sObjectId
+        };
+    }
+
+    function mockReq(sReqId, sStats, o) {
+        return jQuery.extend({
+            MANDT: "100", REQST: sReqId, VERSN: "000", STATS: sStats,
+            REQTY: "1", REQACTION: "00", ADMIN_EMAIL: "AMIT.CHAPATWALA@MADIBA.COM",
+            ERNAM: "206423070", ERDAT: "2026-07-28", ERZET: "15:50:09",
+            ZREJECT_REASON: "", ZMANUAL_REJECT: "", DESCR: "",
+            VEND_TYPE: "010", ZZSF_VRA_VENDGRP: "", ZZSF_VRA_VENDCAT: "1",
+            VRA_BRSCH: "", VRA_MINDK: "", ZZSF_VRA_PORECV: "",
+            ZZSF_VRA_TNC: "", COMMENT1: "testing", COMMENT2: "", COMMENT3: "",
+            COMMENT4: "", ZZSF_VRA_POEX: "", ANNUAL_SPEND: "",
+            ZZSF_VRA_QSREC: "00", ZZSF_VRA_EXMPTPC: "", ZZSF_VRA_EXMPTFRC: "",
+            APPROVER_SSO: "", REQUESTED_FOR: "", AP_REVIEWER: "",
+            AP_DATE: "0000-00-00", CANCEL_REASON: "", ZCANCEL_PERSON: "",
+            SUB_CAT_ID: "000"
+        }, o);
+    }
+
+    // Every CT_* table defaults to empty, which is the point: a live response
+    // routinely comes back with most of them empty, and the mapper has to
+    // survive that. Each fixture fills in only the tables it is testing.
+    function mockDisplay(o) {
+        return JSON.stringify(jQuery.extend({
+            CS_RETURN: {
+                TYPE: "", ID: "", NUMBER: "000", MESSAGE: "", LOG_NO: "",
+                LOG_MSG_NO: "000000", MESSAGE_V1: "", MESSAGE_V2: "",
+                MESSAGE_V3: "", MESSAGE_V4: "", PARAMETER: "", ROW: "0",
+                FIELD: "", SYSTEM: ""
+            },
+            CT_ADR6: [], CT_ANSWER: [], CT_BNKA: [], CT_CONTROL: [],
+            CT_CTI: [], CT_EMSG: [], CT_FILES: [], CT_IBAN: [], CT_KNVK: [],
+            CT_LFA1: [], CT_LFB1: [], CT_LFBK: [], CT_LFBW: [], CT_LFM1: [],
+            CT_LFZA: [], CT_REQ: [], CT_REQUIRED: [], CT_TBCN2: [],
+            CT_TBCN21: [], CT_WYT3: [], CT_ZTERMS: []
+        }, o));
+    }
+
+    var JSON_HEADER = { "Content-Type": "application/json" };
+
     return {
 
         init: function () {
@@ -58,7 +136,21 @@ sap.ui.define([
             oServer.autoRespond     = true;
             oServer.autoRespondAfter = 200;
 
+            // ORDER MATTERS, AND IT IS LAST-WINS. sinon walks its response
+            // list backwards (sap/ui/thirdparty/sinon.js, processRequest:
+            // "for (var i = responses.length - 1; i >= 0; i--)"), so the LAST
+            // registered matching entry answers the request. Every catch-all
+            // below therefore sits ABOVE the specific routes it would
+            // otherwise swallow. Do not "tidy" them to the bottom of their
+            // group — that silently blanks every fixture above them.
+
             // ── htmlhelper ─────────────────────────────────────────────────
+            oServer.respondWith(/\/vera-portal\/htmlhelper.*/, [
+                200,
+                { "Content-Type": "application/json" },
+                JSON.stringify({})
+            ]);
+
             oServer.respondWith(/\/vera-portal\/htmlhelper\?type=getCountry.*/, [
                 200,
                 { "Content-Type": "application/json" },
@@ -112,12 +204,6 @@ sap.ui.define([
                 JSON.stringify({ taxJurisdiction: "CA90210" })
             ]);
 
-            oServer.respondWith(/\/vera-portal\/htmlhelper.*/, [
-                200,
-                { "Content-Type": "application/json" },
-                JSON.stringify({})
-            ]);
-
             // ── inbox ──────────────────────────────────────────────────────
             oServer.respondWith(/\/vera-portal\/inbox.*/, [
                 200,
@@ -148,6 +234,14 @@ sap.ui.define([
                         actionkey: ""
                     }
                 ])
+            ]);
+
+            // ── wz_services ────────────────────────────────────────────────
+            // Catch-all first — see the ordering note at the top of init.
+            oServer.respondWith(/\/vera-portal\/wz_services.*/, [
+                200,
+                { "Content-Type": "application/json" },
+                JSON.stringify({ code: "0", message: "" })
             ]);
 
             // ── wz_services: inviteInfo ────────────────────────────────────
@@ -196,10 +290,154 @@ sap.ui.define([
                 })
             ]);
 
-            oServer.respondWith(/\/vera-portal\/wz_services.*/, [
-                200,
-                { "Content-Type": "application/json" },
-                JSON.stringify({ code: "0", message: "" })
+            // ── wz_services: displayRequest ────────────────────────────────
+            // Registered after inviteInfo, and the per-request ones after the
+            // generic one — last match wins, see the note at the top.
+            //
+            // The generic case is the unmapped-request path: CS_RETURN type E
+            // with a message, which is how the RFC reports failure.
+            oServer.respondWith(/\/vera-portal\/wz_services.*Action=displayRequest.*/, [
+                200, JSON_HEADER,
+                mockDisplay({
+                    CS_RETURN: {
+                        TYPE: "E", MESSAGE: "No data found for this request.",
+                        ID: "", NUMBER: "042"
+                    }
+                })
+            ]);
+
+            // 0000111602 — the rich edit case. Two addresses, an invoicing
+            // name, a tax ID, primary + secondary bank accounts, contacts,
+            // notification emails and three documents.
+            oServer.respondWith(/\/vera-portal\/wz_services.*RequestId=0000111602.*/, [
+                200, JSON_HEADER,
+                mockDisplay({
+                    CT_LFA1: [
+                        mockLfa1({
+                            REQST: "0000111602",
+                            // NAME2 present, so NAME1+NAME3 is the invoicing
+                            // name and NAME2 the legal one.
+                            NAME1: "Rejected Vendor", NAME2: "Rejected Vendor Co LLC",
+                            NAME3: "Holdings",
+                            LAND1: "US", STRAS: "1200 Market Street",
+                            STR_SUPPL1: "Suite 400", ORT01: "Philadelphia",
+                            REGIO: "PA", PSTLZ: "19107", TXJCD: "PA0000000",
+                            SMTP_ADDR: "po@rejectedvendor.example",
+                            STCD2: "123456789", KTOKK: "0001", LIFNR: "0000500123"
+                        }),
+                        mockLfa1({
+                            REQST: "0000111602", NAME1: "Rejected Vendor Co LLC",
+                            LAND1: "US", STRAS: "88 Billing Way", ORT01: "Camden",
+                            REGIO: "NJ", PSTLZ: "08103", KTOKK: "B001"
+                        })
+                    ],
+                    CT_LFBK: [
+                        mockLfbk("01",  "031000053", "1234567890", "Rejected Vendor Co LLC", "US"),
+                        mockLfbk("02",  "021000021", "9876543210", "Rejected Vendor Co LLC", "US")
+                    ],
+                    CT_BNKA: [
+                        { BANKS: "US", BANKL: "031000053", SWIFT: "PNCCUS33", BANKA: "PNC Bank" }
+                    ],
+                    CT_IBAN: [
+                        { BANKS: "US", BANKL: "031000053", BANKN: "1234567890",
+                          IBAN: "US64PNCC0310000531234567890" }
+                    ],
+                    CT_KNVK: [
+                        mockKnvk("Dana Whitfield", "0009", "215 555 0134", "215 555 0135",
+                            "dana.whitfield@rejectedvendor.example"),
+                        mockKnvk("Sam Okoro", "0002", "215 555 0177", "",
+                            "sam.okoro@rejectedvendor.example"),
+                        mockKnvk("Billing Desk", "ZALT", "", "", "ap@rejectedvendor.example")
+                    ],
+                    CT_ADR6: [
+                        { SMTP_ADDR: "remittance@rejectedvendor.example" },
+                        { SMTP_ADDR: "treasury@rejectedvendor.example" }
+                    ],
+                    CT_FILES: [
+                        mockFile("W9",  "W9-RejectedVendor-2026.pdf", "DOC0000000901"),
+                        mockFile("590", "CA590-RejectedVendor.pdf",   "DOC0000000902"),
+                        mockFile("ACH", "BankDetails-PNC.pdf",        "DOC0000000903")
+                    ],
+                    // REQST 0000000000 on these two, exactly as the live
+                    // response has it — only CT_REQ carries the real number.
+                    CT_LFB1: [
+                        { MANDT: "", REQST: "0000000000", VERSN: "000", BUKRS: "A083",
+                          ZWELS: "C", ZTERM: "0013", REPRF: "X", AKONT: "" },
+                        { MANDT: "", REQST: "0000000000", VERSN: "000", BUKRS: "A090",
+                          ZWELS: "C", ZTERM: "0013", REPRF: "X", AKONT: "" }
+                    ],
+                    CT_LFM1: [
+                        { MANDT: "", REQST: "0000000000", VERSN: "000", EKORG: "A001",
+                          WAERS: "USD", ZTERM: "0013", XERSY: "" }
+                    ],
+                    CT_ZTERMS: [
+                        { ZTERM: "0012", TEXT1: "Net 45 Days",  TERM_FLAG: "" },
+                        { ZTERM: "0013", TEXT1: "Net 60 Days",  TERM_FLAG: "Y" },
+                        { ZTERM: "0035", TEXT1: "Net 75 Days",  TERM_FLAG: "" },
+                        // Blank text — the mapper drops it, as the portal did.
+                        { ZTERM: "0099", TEXT1: "",             TERM_FLAG: "" }
+                    ],
+                    CT_REQ: [
+                        mockReq("0000111602", "R", {
+                            VEND_TYPE: "010", COMMENT1: "Rejected — resubmit with a W-9.",
+                            ANNUAL_SPEND: "250000", ZZSF_VRA_QSREC: "02",
+                            ZZSF_VRA_EXMPTPC: "14", ZZSF_VRA_PORECV: "X"
+                        })
+                    ]
+                })
+            ]);
+
+            // 0000111603 — display, and a Wire account: BVTYP U01 with a
+            // non-US bank country, which is also a country the (hidden) bank
+            // country Select does not list, and a REGIO the region list has no
+            // entry for. Both should render blank rather than being rewritten.
+            oServer.respondWith(/\/vera-portal\/wz_services.*RequestId=0000111603.*/, [
+                200, JSON_HEADER,
+                mockDisplay({
+                    CT_LFA1: [
+                        mockLfa1({
+                            REQST: "0000111603", NAME1: "In Flight Vendor Ltd",
+                            LAND1: "GB", STRAS: "10 Finsbury Square",
+                            ORT01: "London", REGIO: "LDN", PSTLZ: "EC2A 1AF",
+                            STCD2: "987654321"
+                        })
+                    ],
+                    CT_LFBK: [
+                        mockLfbk("U01", "BARCGB22", "60161331926819", "In Flight Vendor Ltd", "GB")
+                    ],
+                    CT_KNVK: [
+                        mockKnvk("Priya Raman", "0018", "44 20 7946 0011", "",
+                            "priya.raman@inflight.example")
+                    ],
+                    CT_LFB1: [
+                        { MANDT: "", REQST: "0000000000", VERSN: "000", BUKRS: "A083",
+                          ZWELS: "C", ZTERM: "0035", REPRF: "X", AKONT: "" }
+                    ],
+                    CT_ZTERMS: [
+                        { ZTERM: "0013", TEXT1: "Net 60 Days", TERM_FLAG: "" },
+                        { ZTERM: "0035", TEXT1: "Net 75 Days", TERM_FLAG: "Y" }
+                    ],
+                    CT_REQ: [
+                        mockReq("0000111603", "W", {
+                            COMMENT1: "Awaiting approval.", ZZSF_VRA_QSREC: "04"
+                        })
+                    ]
+                })
+            ]);
+
+            // 0000111605 — the crash-bait case, reproducing the live sample:
+            // one near-empty CT_LFA1 row and every other table empty. No bank
+            // record at all, so the method has to resolve to Check.
+            //
+            // Its CT_REQ also carries a REQST that disagrees with the one
+            // asked for, which the live service did too — the mapper should
+            // take the returned one and log the mismatch.
+            oServer.respondWith(/\/vera-portal\/wz_services.*RequestId=0000111605.*/, [
+                200, JSON_HEADER,
+                mockDisplay({
+                    CT_LFA1: [ mockLfa1({ NAME1: "MYMEDIA", KTOKK: "0001" }) ],
+                    CT_REQ:  [ mockReq("0000111595", "P", { COMMENT1: "testing" }) ]
+                })
             ]);
 
             // ── vendor search ──────────────────────────────────────────────

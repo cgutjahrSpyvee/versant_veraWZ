@@ -70,22 +70,40 @@
                             <Input value="{reg>phone}" type="Tel" editable="{reg>/ui/editable}"/>
                             <Label text="{i18n>faxNumber}"/>
                             <Input value="{reg>fax}" type="Tel" editable="{reg>/ui/editable}"/>
+                            <!-- ABTNR, the SAP contact department codes, ported
+                                 verbatim from tools.java setupContactDepartmentArray.
+                                 The keys have to be these: ABTNR is what a loaded
+                                 request carries and what the save writes back. -->
                             <Label text="{i18n>department}"/>
-                            <Select selectedKey="{reg>department}" enabled="{reg>/ui/editable}">
+                            <Select selectedKey="{reg>department}" enabled="{reg>/ui/editable}"
+                                    forceSelection="false">
                                 <items>
-                                    <core:Item key=""        text="{i18n>selectOne}"/>
-                                    <core:Item key="ACCT"    text="Accounting"/>
-                                    <core:Item key="ADMIN"   text="Administration"/>
-                                    <core:Item key="BILLING" text="Billing"/>
-                                    <core:Item key="EXEC"    text="Executive"/>
-                                    <core:Item key="FIN"     text="Finance"/>
-                                    <core:Item key="HR"      text="Human Resources"/>
-                                    <core:Item key="IT"      text="Information Technology"/>
-                                    <core:Item key="LEGAL"   text="Legal"/>
-                                    <core:Item key="MGMT"    text="Management"/>
-                                    <core:Item key="OPS"     text="Operations"/>
-                                    <core:Item key="SALES"   text="Sales"/>
-                                    <core:Item key="OTHER"   text="Other"/>
+                                    <core:Item key=""     text="{i18n>selectOne}"/>
+                                    <core:Item key="0001" text="Managing Director"/>
+                                    <core:Item key="0002" text="Purchasing"/>
+                                    <core:Item key="0003" text="Sales"/>
+                                    <core:Item key="0004" text="Organization"/>
+                                    <core:Item key="0005" text="Administration"/>
+                                    <core:Item key="0006" text="Production"/>
+                                    <core:Item key="0007" text="Quality assurance"/>
+                                    <core:Item key="0008" text="Secretaries"/>
+                                    <core:Item key="0009" text="Financial department"/>
+                                    <core:Item key="0010" text="Legal department"/>
+                                    <core:Item key="0011" text="Applier"/>
+                                    <core:Item key="0012" text="Collection"/>
+                                    <core:Item key="0013" text="Credit"/>
+                                    <core:Item key="0014" text="Ship To"/>
+                                    <core:Item key="0015" text="Inv C/O"/>
+                                    <core:Item key="0016" text="Indirect Customer"/>
+                                    <core:Item key="0017" text="Trade Spend"/>
+                                    <core:Item key="0018" text="Treasury"/>
+                                    <core:Item key="0019" text="Media Buying"/>
+                                    <core:Item key="0020" text="Collection - DIGITAL"/>
+                                    <core:Item key="0021" text="Collection - NETWORK"/>
+                                    <core:Item key="0022" text="Collection - CABLE"/>
+                                    <core:Item key="0023" text="Collection - TVS"/>
+                                    <core:Item key="ZALT" text="Alternate Billing"/>
+                                    <core:Item key="ZCFS" text="CFS Department"/>
                                 </items>
                             </Select>
                         </f:content>

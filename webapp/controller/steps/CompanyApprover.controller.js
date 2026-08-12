@@ -146,6 +146,9 @@ sap.ui.define([
         // ── Validation ─────────────────────────────────────────────────
 
         _validateStep: function () {
+            // Nothing to validate on a read-only request — see Banking.
+            if (!this._reg().getProperty("/ui/editable")) { return true; }
+
             this._reg().setProperty("/ui/companyApproverTouched", true);
 
             var aCodes = this._reg().getProperty("/companyCodes");

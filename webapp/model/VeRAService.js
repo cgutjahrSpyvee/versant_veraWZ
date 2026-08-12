@@ -13,8 +13,9 @@
 sap.ui.define([
     "sap/ui/base/Object",
     "sap/ui/core/format/DateFormat",
-    "sap/base/Log"
-], function (BaseObject, DateFormat, Log) {
+    "sap/base/Log",
+    "vsnt/vera/model/paymentMethods"
+], function (BaseObject, DateFormat, Log, paymentMethods) {
     "use strict";
 
     // Derive the app's service-segment from the UI5 module path and manifest version.
@@ -235,6 +236,51 @@ sap.ui.define([
         },
 
         /**
+         * A submitted request's full detail — a 1:1 dump of the
+         * Z_SFI_I510_VRA_VENDISP export tables (CT_LFA1, CT_LFBK, CT_KNVK,
+         * CT_REQ, CT_FILES, …) plus a CS_RETURN structure.
+         *
+         * @param {string} sAdminSSO  ADMIN_SSO, off the invite's vadminData row
+         * @param {string} sRequestId REQST, zero-padded as the backend sent it
+         */
+        getRequestDetail: function (sAdminSSO, sRequestId) {
+            return this._get("wz_services", {
+                Action:    "displayRequest",
+                AdminSSO:  sAdminSSO  || "",
+                ReqId: sRequestId || ""
+            });
+        },
+
+        /**
+         * Did a displayRequest response succeed? It reports failure through
+         * CS_RETURN (TYPE "E" with a message — see maintain_vendor.java:261)
+         * rather than the code/message envelope the other wz_services actions
+         * use, so this understands both.
+         *
+         * @returns {object} { ok, message }
+         */
+        readDetailReturn: function (oData) {
+            if (!oData) {
+                return { ok: false, message: "" };
+            }
+
+            // A CS_RETURN of type E with no message is not a failure — the
+            // legacy check required both.
+            var oReturn  = oData.CS_RETURN || {};
+            var sMessage = String(oReturn.MESSAGE || "").trim();
+            if (String(oReturn.TYPE || "").toUpperCase() === "E" && sMessage) {
+                return { ok: false, message: sMessage };
+            }
+
+            // The servlet may still wrap the RFC dump in the usual envelope.
+            if (oData.code !== undefined && oData.code !== null && oData.code !== "0") {
+                return { ok: false, message: oData.message || "" };
+            }
+
+            return { ok: true, message: sMessage };
+        },
+
+        /**
          * ZZSF_VRA_INVSTAT code → { code, text, state, reg, actions, edit }.
          * Unknown codes fall through showing the raw code rather than a blank
          * cell, so a new backend status is visible instead of silently empty.
@@ -368,23 +414,27 @@ sap.ui.define([
             // than once. Which version carries the live REQST is not settled,
             // so this keeps the long-standing last-wins behaviour but says so
             // out loud when the versions actually disagree.
+            //
+            // ADMIN_SSO rides along on the same row: it is the only place the
+            // SSO that displayRequest needs is published to this client.
             var mRequestByInvite = {};
             aVAdmin.forEach(function (oRow) {
                 if (!oRow || !oRow.ZZSF_VRA_EMLID || !oRow.REQST) { return; }
-                var sPrev = mRequestByInvite[oRow.ZZSF_VRA_EMLID];
-                if (sPrev && normaliseReqId(sPrev) !== normaliseReqId(oRow.REQST)) {
+                var oPrev = mRequestByInvite[oRow.ZZSF_VRA_EMLID];
+                if (oPrev && normaliseReqId(oPrev.reqId) !== normaliseReqId(oRow.REQST)) {
                     Log.warning("VeRAService: vadminData has conflicting REQST for invite " +
-                        oRow.ZZSF_VRA_EMLID + " — '" + sPrev + "' then '" + oRow.REQST +
+                        oRow.ZZSF_VRA_EMLID + " — '" + oPrev.reqId + "' then '" + oRow.REQST +
                         "'; using the later row.");
                 }
-                mRequestByInvite[oRow.ZZSF_VRA_EMLID] = oRow.REQST;
+                mRequestByInvite[oRow.ZZSF_VRA_EMLID] = {
+                    reqId: oRow.REQST,
+                    sso:   oRow.ADMIN_SSO || ""
+                };
             });
 
             return aInvites.map(function (oInv) {
-                var oMapped = this.mapInviteRow(
-                    oInv,
-                    mRequestByInvite[oInv.ZZSF_VRA_EMLID] || ""
-                );
+                var oAdmin  = mRequestByInvite[oInv.ZZSF_VRA_EMLID] || {};
+                var oMapped = this.mapInviteRow(oInv, oAdmin.reqId, oAdmin.sso);
                 return jQuery.extend(oMapped, this.resolveInviteTarget(oMapped, aRequests));
             }, this);
         },
@@ -396,14 +446,27 @@ sap.ui.define([
          *
          * @param {object} oInv       raw inviteData record
          * @param {string} sRequestId REQST for this invite, "" if none yet
+         * @param {string} sAdminSso  ADMIN_SSO from the same vadminData row
          */
-        mapInviteRow: function (oInv, sRequestId) {
+        mapInviteRow: function (oInv, sRequestId, sAdminSso) {
+            var sSso = sAdminSso || oInv.ADMIN_SSO || "";
+
+            // Only worth saying when there is a request to go and fetch:
+            // without an SSO, displayRequest cannot be called for this row.
+            if (sRequestId && !sSso) {
+                Log.warning("VeRAService: invite " + oInv.ZZSF_VRA_EMLID +
+                    " has request " + sRequestId + " but no ADMIN_SSO — its " +
+                    "detail cannot be fetched.");
+            }
+
             return {
                 // The invitation's own id. Distinct from reqId below.
                 id:      oInv.ZZSF_VRA_EMLID || "",
                 // REQST, joined in from vadminData — the request number the
                 // backend keys attachments and saves off.
                 reqId:   sRequestId          || "",
+                // ADMIN_SSO from vadminData — displayRequest's AdminSSO param.
+                adminSso: sSso,
                 name:    oInv.VEND_NAME      || "",
                 type:    oInv.VEND_DESC      || "",
                 contact: [oInv.FIRST_NAME, oInv.LAST_NAME].filter(Boolean).join(" "),
@@ -420,6 +483,373 @@ sap.ui.define([
             var oDate = new Date(sDate + "T" + (sTime || "00:00:00"));
             if (isNaN(oDate.getTime())) { return sDate; }
             return DateFormat.getDateTimeInstance({ style: "medium" }).format(oDate);
+        },
+
+        // ── Request detail (wz_services?Action=displayRequest) ──────────
+        //
+        // The response is a raw dump of the Z_SFI_I510_VRA_VENDISP export
+        // tables, so these mappers are the SAP-shape → reg-model boundary.
+        // Every field mapping below is taken from the portal page that read
+        // the same RFC, UI/maintain_vendor.java; line references are kept so
+        // the two can be diffed. All pure and all tolerant of empty tables —
+        // a live response can and does come back with most of them empty.
+
+        /**
+         * A whole displayRequest response → data for the reg model.
+         *
+         * The RFC wins wherever it has a value and the invite seed fills the
+         * gaps, mirroring maintain_vendor.java:748, where CT_REQ's vendor type
+         * is only taken when the caller did not already know one.
+         *
+         * @param   {object} oResponse the { CS_RETURN, CT_* } response
+         * @param   {object} oSeed     reg-model data already built from the invite
+         * @returns {object} data to hand to JSONModel.setData
+         */
+        mapRequestDetail: function (oResponse, oSeed) {
+            var oData     = jQuery.extend({}, oSeed || {});
+            var oRes      = oResponse || {};
+            var aLfa1     = oRes.CT_LFA1 || [];
+            var oPrimary  = aLfa1[0]     || {};
+            var oReq      = (oRes.CT_REQ || [])[0] || {};
+            var aLfb1     = oRes.CT_LFB1 || [];
+            var oFiles    = this.mapFiles(oRes.CT_FILES);
+
+            // The request number the rest of the app keys attachments and
+            // saves off. CT_REQ is the authority; anything else is a bug
+            // worth seeing rather than silently following.
+            var sRequestId = oReq.REQST || oData.requestId || "";
+            if (oReq.REQST && oData.requestId &&
+                    normaliseReqId(oReq.REQST) !== normaliseReqId(oData.requestId)) {
+                Log.warning("VeRAService: displayRequest for " + oData.requestId +
+                    " returned REQST " + oReq.REQST + "; using the returned one.");
+            }
+            oData.requestId = sRequestId;
+
+            var oNames   = this.mapVendorNames(oPrimary);
+            var sPoEmail = oPrimary.SMTP_ADDR || oReq.SMTP_ADDR || "";
+
+            oData.vendorType   = oReq.VEND_TYPE         || oData.vendorType   || "";
+            oData.userType     = oReq.ZZSF_VRA_VENDCAT  || oData.userType     || "";
+            oData.requestType  = oReq.REQTY             || oData.requestType  || "1";
+            oData.approverSSO  = oReq.APPROVER_SSO      || oData.approverSSO  || "";
+            oData.comments     = oReq.COMMENT1          || oData.comments     || "";
+            oData.annualSpend  = oReq.ANNUAL_SPEND      || oData.annualSpend  || "";
+            oData.requestedFor = oReq.REQUESTED_FOR     || oData.requestedFor || "";
+            oData.vendorId     = oData.vendorId || oPrimary.LIFNR || null;
+            oData.companyCodes = this.mapCompanyCodes(aLfb1);
+
+            // STATS uses the same letters as an inviteREQData INVSTAT, so the
+            // existing table covers it rather than a second one.
+            if (oReq.STATS) {
+                oData.status = this.mapRequestStatus(oReq.STATS).reg;
+            }
+
+            oData.basic = jQuery.extend({}, oData.basic, {
+                legalName:      oNames.legalName     || oData.basic.legalName || "",
+                invoicingName:  oNames.invoicingName || "",
+                poEmail:        sPoEmail,
+                // maintain_vendor.java:1286 infers "Accept P.O.?" from the PO
+                // email alone; the flag is only read in registration.java:197.
+                acceptPO:       !!sPoEmail || oReq.ZZSF_VRA_PORECV === "X",
+                primaryAddress: this.mapDetailAddress(oPrimary),
+                secondaryAddresses: this.mapSecondaryAddresses(aLfa1)
+            });
+
+            oData.tax      = this.mapDetailTax(oPrimary, oReq, oFiles, sRequestId);
+            oData.contacts = { items: this.mapDetailContacts(oRes.CT_KNVK) };
+
+            oData.paymentTerms = {
+                availableTerms: this.mapPaymentTermsCatalog(oRes.CT_ZTERMS),
+                // Only row 0's ZTERM is the selection (maintain_vendor.java:730).
+                selected: (aLfb1[0] && aLfb1[0].ZTERM) || oData.paymentTerms.selected || ""
+            };
+
+            oData.banking = jQuery.extend(
+                this.mapBankAccounts(oRes.CT_LFBK, oRes.CT_BNKA, oRes.CT_IBAN,
+                    oFiles, sRequestId),
+                { paymentNotifications: this.mapNotificationEmails(oRes.CT_ADR6) }
+            );
+
+            // Kept for support: buildSavePayload builds a whitelist, so this
+            // can never leak back into a POST.
+            oData._detail = oRes;
+
+            return oData;
+        },
+
+        /**
+         * NAME1/NAME2/NAME3 → the two names the form shows.
+         * maintain_vendor.java:722-727 — with no invoicing name the legal name
+         * is the split-at-35 pair NAME1+NAME3; with one, NAME2 holds the legal
+         * name and the pair becomes the invoicing name.
+         */
+        mapVendorNames: function (oRow) {
+            var o     = oRow || {};
+            var sPair = [o.NAME1, o.NAME3].filter(Boolean).join(" ").trim();
+
+            if (!o.NAME2) {
+                return { legalName: sPair, invoicingName: "" };
+            }
+            return { legalName: o.NAME2, invoicingName: sPair };
+        },
+
+        // One CT_LFA1 row → the address shape both primary and secondary use.
+        mapDetailAddress: function (oRow) {
+            var o = oRow || {};
+            return {
+                country:         o.LAND1      || "",
+                address1:        o.STRAS      || "",
+                address2:        o.STR_SUPPL1 || "",
+                address3:        o.STR_SUPPL2 || "",
+                city:            o.ORT01      || "",
+                state:           o.REGIO      || "",
+                zip:             o.PSTLZ      || "",
+                taxJurisdiction: o.TXJCD      || ""
+            };
+        },
+
+        /**
+         * CT_LFA1 rows 1..n — row 0 is the primary address
+         * (maintain_vendor.java:1898). KTOKK is the address role: B001 is a
+         * purchasing address, R001 or blank a remit one (:2062-2073).
+         */
+        mapSecondaryAddresses: function (aLfa1) {
+            return (aLfa1 || []).slice(1).map(function (oRow) {
+                return jQuery.extend(this.mapDetailAddress(oRow), {
+                    type: oRow.KTOKK === "B001" ? "BILLING" : "MAILING"
+                });
+            }, this);
+        },
+
+        /**
+         * Tax fields, which come from three places: the ID numbers off
+         * CT_LFA1, the classification codes off CT_REQ, and the W-9/590
+         * documents off CT_FILES.
+         */
+        mapDetailTax: function (oLfa1Row, oReqRow, oFiles, sRequestId) {
+            var oLfa1 = oLfa1Row || {};
+            var oReq  = oReqRow  || {};
+            var o     = oFiles   || {};
+
+            // STCD1 is the SSN, STCD2 the tax ID — confirmed both ways by the
+            // save path, objectactions.java:1045-1046. The category is decided
+            // by whichever one is populated (maintain_vendor.java:2924, :3111).
+            var sTaxId = oLfa1.STCD2 || "";
+            var sSsn   = oLfa1.STCD1 || "";
+
+            return {
+                entityType:   "Entity",
+                isUSPerson:   true,
+                taxCategory:  (!sTaxId && sSsn) ? "SSN" : "TaxID",
+                taxIdNumber:  sTaxId,
+                ssnNumber:    sSsn,
+
+                recipientType:    oReq.ZZSF_VRA_QSREC    || "",
+                exemptPayeeCode:  oReq.ZZSF_VRA_EXMPTPC  || "",
+                factaCode:        oReq.ZZSF_VRA_EXMPTFRC || "",
+                independentContractor: "",
+
+                w9FileName: o.W9.name,
+                w9DocId:    o.W9.id,
+                w9Url:      this._docUrl(o.W9, sRequestId),
+                doc590Name: o["590"].name,
+                doc590Id:   o["590"].id,
+                doc590Url:  this._docUrl(o["590"], sRequestId),
+
+                // Captured because CT_FILES carries them, but with no UI: the
+                // form has no W-8 / legal / support document section yet.
+                w8DocId:          o.W8.id,
+                w8FileName:       o.W8.name,
+                legalDocId:       o.LEG.id,
+                legalFileName:    o.LEG.name,
+                supportDocId:     o.SUP.id,
+                supportFileName:  o.SUP.name
+            };
+        },
+
+        /**
+         * CT_FILES → one slot per document type, plus the per-secondary-account
+         * bank forms, which are filed under the account's BVTYP rather than a
+         * fixed type (objectactions.java:1990).
+         *
+         * Types are W9 / W8 / ACH / 590 / LEG / SUP — maintain_vendor.java:637.
+         */
+        mapFiles: function (aFiles) {
+            var oOut = {
+                W9: { name: "", id: "" }, W8:  { name: "", id: "" },
+                ACH:{ name: "", id: "" }, LEG: { name: "", id: "" },
+                SUP:{ name: "", id: "" }, "590": { name: "", id: "" },
+                byBvtyp: {}
+            };
+
+            (aFiles || []).forEach(function (oRow) {
+                if (!oRow) { return; }
+                var sType = String(oRow.FILE_TYPE || "").toUpperCase();
+                var oSlot = {
+                    name: oRow.ACT_FILE_NAME || "",
+                    id:   oRow.OBJECT_ID     || ""
+                };
+                if (oOut.hasOwnProperty(sType) && sType !== "byBvtyp") {
+                    oOut[sType] = oSlot;
+                } else if (sType) {
+                    oOut.byBvtyp[sType] = oSlot;
+                }
+            });
+
+            return oOut;
+        },
+
+        // A displaycsdoc link for an already-stored document, or "" when there
+        // is nothing to link to. Built here rather than in a formatter so the
+        // views do not need the service just to reach BASE.
+        _docUrl: function (oSlot, sRequestId) {
+            if (!oSlot || !oSlot.id || !oSlot.name) { return ""; }
+            return this.getFileUrl(oSlot.name, "ZSVRA_REQ", sRequestId || "", oSlot.id);
+        },
+
+        /**
+         * The payment method is not stored — the portal reconstructs it from
+         * the bank record every time (maintain_vendor.java:4142-4182 and
+         * :4244-4252). Check writes no CT_LFBK row at all, and BVTYP encodes
+         * the rest: 01 = US ACH, U01 = US Wire, W01 = foreign Wire.
+         */
+        derivePaymentMethod: function (oLfbkRow) {
+            if (!oLfbkRow || !oLfbkRow.BANKS) { return paymentMethods.CHECK; }
+            var sBvtyp = String(oLfbkRow.BVTYP || "");
+            if (sBvtyp.indexOf("W") !== -1 || sBvtyp.indexOf("U") !== -1) {
+                return paymentMethods.WIRE;
+            }
+            return paymentMethods.ACH;
+        },
+
+        /**
+         * CT_LFBK (+ the SWIFT and IBAN side tables) → the banking branch.
+         *
+         * The primary account is the row whose BVTYP contains "01"
+         * (maintain_vendor.java:289); every other row is a secondary account.
+         * No primary row means the vendor is paid by check.
+         */
+        mapBankAccounts: function (aLfbk, aBnka, aIban, oFiles, sRequestId) {
+            var aRows    = (aLfbk || []).filter(Boolean);
+            var that     = this;
+            var oFileMap = (oFiles && oFiles.byBvtyp) || {};
+
+            var iPrimary = -1;
+            aRows.forEach(function (oRow, i) {
+                if (iPrimary === -1 && String(oRow.BVTYP || "").indexOf("01") !== -1) {
+                    iPrimary = i;
+                }
+            });
+
+            function mapAccount(oRow) {
+                var sBvtyp = oRow.BVTYP || "";
+                var oDoc   = oFileMap[sBvtyp.toUpperCase()] || { name: "", id: "" };
+                return {
+                    method:       that.derivePaymentMethod(oRow),
+                    country:      oRow.BANKS || "",
+                    bvtyp:        sBvtyp,
+                    routingNum:   oRow.BANKL || "",
+                    accountNum:   oRow.BANKN || "",
+                    holderName:   oRow.KOINH || "",
+                    swiftNum:     that._findSwift(aBnka, oRow),
+                    ibanNum:      that._findIban(aIban, oRow),
+                    bankFileName: oDoc.name,
+                    bankDocId:    oDoc.id,
+                    bankFileUrl:  that._docUrl(oDoc, sRequestId)
+                };
+            }
+
+            // No bank record at all — check payment. Keep the model's own
+            // defaults for the empty fields rather than inventing values.
+            var oPrimaryAccount = iPrimary === -1
+                ? {
+                    method: paymentMethods.CHECK, country: "", bvtyp: "",
+                    routingNum: "", accountNum: "", holderName: "",
+                    swiftNum: "", ibanNum: "",
+                    bankFileName: (oFiles && oFiles.ACH.name) || "",
+                    bankDocId:    (oFiles && oFiles.ACH.id)   || "",
+                    bankFileUrl:  this._docUrl(oFiles && oFiles.ACH, sRequestId)
+                }
+                : jQuery.extend(mapAccount(aRows[iPrimary]), {
+                    // The primary account's own form is filed under ACH.
+                    bankFileName: (oFiles && oFiles.ACH.name) || "",
+                    bankDocId:    (oFiles && oFiles.ACH.id)   || "",
+                    bankFileUrl:  this._docUrl(oFiles && oFiles.ACH, sRequestId)
+                });
+
+            return {
+                primaryAccount: oPrimaryAccount,
+                secondaryAccounts: aRows.filter(function (oRow, i) {
+                    return i !== iPrimary;
+                }).map(mapAccount)
+            };
+        },
+
+        // CT_BNKA carries the SWIFT code for a bank key. The portal also
+        // compared an account number here, against a field the save path never
+        // writes (maintain_vendor.java:359 reads BANKA, objectactions.java:1900
+        // writes BNKLZ), which makes that half of the join dead — so this
+        // matches on the bank key alone.
+        _findSwift: function (aBnka, oLfbkRow) {
+            var oHit = (aBnka || []).filter(function (oRow) {
+                return oRow && oRow.BANKL && oRow.BANKL === oLfbkRow.BANKL;
+            })[0];
+            return (oHit && oHit.SWIFT) || "";
+        },
+
+        // CT_IBAN is keyed on bank key + account number, and that join does
+        // match what the save writes (objectactions.java:1909).
+        _findIban: function (aIban, oLfbkRow) {
+            var oHit = (aIban || []).filter(function (oRow) {
+                return oRow && oRow.BANKL === oLfbkRow.BANKL &&
+                    oRow.BANKN === oLfbkRow.BANKN;
+            })[0];
+            return (oHit && oHit.IBAN) || "";
+        },
+
+        // CT_ADR6 → the Banking step's payment-notification list. Positional
+        // rows carrying nothing but an address (maintain_vendor.java:4956).
+        mapNotificationEmails: function (aAdr6) {
+            return (aAdr6 || []).filter(function (oRow) {
+                return oRow && oRow.SMTP_ADDR;
+            }).map(function (oRow) {
+                return { email: oRow.SMTP_ADDR };
+            });
+        },
+
+        // CT_KNVK → the Contacts step. maintain_vendor.java:5083-5087; PARNR
+        // and SEQNO are not used, contacts are identified by row order.
+        mapDetailContacts: function (aKnvk) {
+            return (aKnvk || []).filter(Boolean).map(function (oRow) {
+                return {
+                    name:       oRow.NAME1       || "",
+                    email:      oRow.SMTP_ADDR   || "",
+                    phone:      oRow.TELF1       || "",
+                    fax:        oRow.FAX_NUMBER  || "",
+                    department: oRow.ABTNR       || ""
+                };
+            });
+        },
+
+        // CT_ZTERMS → the terms value help. Rows with no text are skipped, as
+        // the portal skipped them (maintain_vendor.java:3912).
+        mapPaymentTermsCatalog: function (aZterms) {
+            return (aZterms || []).filter(function (oRow) {
+                return oRow && oRow.TEXT1;
+            }).map(function (oRow) {
+                return { Key: oRow.ZTERM || "", Description: oRow.TEXT1 };
+            });
+        },
+
+        // CT_LFB1 carries one row per company code (maintain_vendor.java:733).
+        mapCompanyCodes: function (aLfb1) {
+            var aOut = [];
+            (aLfb1 || []).forEach(function (oRow) {
+                if (oRow && oRow.BUKRS && aOut.indexOf(oRow.BUKRS) === -1) {
+                    aOut.push(oRow.BUKRS);
+                }
+            });
+            return aOut;
         },
 
         searchVendors: function (oParams) {

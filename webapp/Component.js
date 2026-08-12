@@ -122,6 +122,119 @@ sap.ui.define([
         },
 
         /**
+         * Seeds the reg model for the invite row the user opened, ready for the
+         * wizard, and resolves with { ok, mode, message }.
+         *
+         * An invite with no request behind it opens an empty form and needs no
+         * fetch. Anything else is an existing request, whose own data lives
+         * behind wz_services?Action=displayRequest — the invite carries only a
+         * handful of its fields.
+         *
+         * The order matters: the model is seeded *before* the caller navigates.
+         * setData resets the whole /ui branch and /wizard/stepsValidated, both
+         * of which Registration._onRouteMatched sets on route match, so a
+         * setData landing after navigation would put a read-only request back
+         * into edit mode. For the same reason the seed carries /mode,
+         * /ui/editable and the validated flags itself rather than waiting for
+         * the route.
+         *
+         * Never rejects — failures come back as ok:false, mirroring
+         * loadInvites.
+         *
+         * @param   {object} oRow a mapped inbox row (see VeRAService.mapInvites)
+         * @returns {jQuery.Promise} resolves with { ok, mode, message }
+         */
+        seedRegistrationFromInvite: function (oRow) {
+            var that      = this;
+            var oSvc      = this._veraService;
+            var oInbox    = this.getModel("inbox");
+            var oDeferred = jQuery.Deferred();
+            var sMode     = (oRow && oRow.mode) || "register";
+            var bEditable = sMode !== "display";
+
+            var oSeed = models.createRegistrationModelFromInvite(
+                oRow.invite,
+                this.getModel("reg").getProperty("/userEmail"),
+                oRow.reqId
+            ).getData();
+
+            oSeed.mode        = sMode;
+            oSeed.ui.editable = bEditable;
+            if (!bEditable) {
+                oSeed.wizard.stepsValidated =
+                    oSeed.wizard.stepsValidated.map(function () { return true; });
+            }
+
+            var fnDone = function (oData, sError) {
+                oInbox.setProperty("/busy", false);
+                if (sError) {
+                    oDeferred.resolve({ ok: false, mode: sMode, message: sError });
+                    return;
+                }
+                that.getModel("reg").setData(oData);
+                oDeferred.resolve({ ok: true, mode: sMode, message: "" });
+            };
+
+            // No request yet — the invite is all there is to show.
+            if (sMode === "register") {
+                fnDone(oSeed);
+                return oDeferred.promise();
+            }
+
+            // Both come off the invite's vadminData row; without them there is
+            // nothing to ask the backend for.
+            if (!oRow.reqId || !oRow.adminSso) {
+                Log.error("Component: invite " + oRow.id + " opens in '" + sMode +
+                    "' mode but has no " + (oRow.reqId ? "ADMIN_SSO" : "REQST") +
+                    " — cannot load its request.");
+                fnDone(null, this._i18nText("requestRefMissingText"));
+                return oDeferred.promise();
+            }
+
+            oInbox.setProperty("/busy", true);
+
+            // Captured here rather than read out of the jQuery.when below,
+            // which flattens a multi-argument resolution (an ajax deferred
+            // resolves with data, textStatus, jqXHR) into an array and would
+            // leave the shape ambiguous.
+            var oResponse = null;
+            var pDetail = oSvc.getRequestDetail(oRow.adminSso, oRow.reqId)
+                .done(function (oResult) { oResponse = oResult; });
+
+            // The region list is filtered off the loaded country, so wait for
+            // the reference data too rather than racing the Basic step.
+            jQuery.when(this.getReferenceData(), pDetail).done(function () {
+                var oReturn = oSvc.readDetailReturn(oResponse);
+
+                if (!oReturn.ok) {
+                    Log.error("Component: displayRequest for " + oRow.reqId +
+                        " failed — " + (oReturn.message || "no message"));
+                    fnDone(null, oReturn.message || that._i18nText("requestLoadErrorText"));
+                    return;
+                }
+
+                var oData;
+                try {
+                    oData = oSvc.mapRequestDetail(oResponse, oSeed);
+                } catch (e) {
+                    Log.error("Component: failed to map request " + oRow.reqId +
+                        " — " + e.message);
+                    fnDone(null, that._i18nText("requestLoadErrorText"));
+                    return;
+                }
+                fnDone(oData);
+            }).fail(function () {
+                fnDone(null, that._i18nText("networkErrorText"));
+            });
+
+            return oDeferred.promise();
+        },
+
+        _i18nText: function (sKey) {
+            return this.getModel("i18n").getResourceBundle().getText(sKey);
+        },
+
+        /**
          * Fills the "ref" model with the country and region lists. Owned by the
          * Component rather than the Basic step because the step's onInit runs
          * only once — the wizard view is cached by the router — while the reg
@@ -170,8 +283,15 @@ sap.ui.define([
         // Drive the Status page's ObjectHeader from the most recent invite.
         _syncRegStatus: function (aItems) {
             if (!aItems.length) { return; }
+            var oReg = this.getModel("reg");
+
+            // Once a specific request has been opened, the newest invite is no
+            // longer what the reg model is about. An invite refresh landing
+            // after seedRegistrationFromInvite would otherwise overwrite
+            // /requestId — the key every attachment upload and save runs on.
+            if (oReg.getProperty("/mode") !== "register") { return; }
+
             var oLatest = aItems[0];
-            var oReg    = this.getModel("reg");
             oReg.setProperty("/status", oLatest.status.reg);
             // reqId (REQST), not id — /requestId is the request number that
             // attachment uploads and saves are keyed off. Left alone when the

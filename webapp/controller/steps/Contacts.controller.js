@@ -30,6 +30,9 @@ sap.ui.define([
         onContactFieldChange: function () { this._validateStep(); },
 
         _validateStep: function () {
+            // Nothing to validate on a read-only request — see Banking.
+            if (!this._reg().getProperty("/ui/editable")) { return true; }
+
             var aContacts = this._reg().getProperty("/contacts/items");
             var aMissing = [];
 

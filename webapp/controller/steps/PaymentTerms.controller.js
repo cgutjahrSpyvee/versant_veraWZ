@@ -45,6 +45,9 @@ sap.ui.define([
         },
 
         _validateStep: function () {
+            // Nothing to validate on a read-only request — see Banking.
+            if (!this._reg().getProperty("/ui/editable")) { return true; }
+
             var sSelected = this._reg().getProperty("/paymentTerms/selected");
             var bValid = !!sSelected;
             this._reg().setProperty("/wizard/stepsValidated/3", bValid);

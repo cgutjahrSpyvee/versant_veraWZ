@@ -4,13 +4,13 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/Input",
     "sap/m/Label",
+    "sap/m/MessageBox",
     "sap/m/MessageToast",
     "sap/m/Text",
     "sap/ui/layout/form/SimpleForm",
-    "vsnt/vera/model/models",
     "vsnt/vera/model/appInfo"
-], function (Controller, Dialog, Button, Input, Label, MessageToast, Text,
-             SimpleForm, models, appInfo) {
+], function (Controller, Dialog, Button, Input, Label, MessageBox, MessageToast, Text,
+             SimpleForm, appInfo) {
     "use strict";
 
     var rEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -189,25 +189,36 @@ sap.ui.define([
          *
          * Which form depends on whether a request already sits behind the
          * invite's REQST — VeRAService.resolveInviteTarget put that on the row
-         * as `mode`: "register" (empty form), "edit" or "display".
+         * as `mode`: "register" (empty form), "edit" or "display". For the
+         * latter two the request's own data is fetched first; the Component
+         * owns that, and the navigation waits for it.
          */
         onInvitePress: function (oEvent) {
+            var that       = this;
             var oComponent = this.getOwnerComponent();
-            var oRow       = oEvent.getParameter("listItem").getBindingContext("inbox").getObject();
-            var sEmail     = oComponent.getModel("reg").getProperty("/userEmail");
-            var sMode      = oRow.mode || "register";
 
-            // TODO: for "edit"/"display" the existing request's own data still
-            // has to be pulled in, which needs a JSON endpoint over
-            // Z_SFI_I510_VRA_VENDISP (see maintain_vendor.java). Until that
-            // exists the invite fields are all we can seed, so an existing
-            // request opens with the right mode but only the invite's data.
-            oComponent.getModel("reg").setData(
-                models.createRegistrationModelFromInvite(
-                    oRow.invite, sEmail, oRow.reqId
-                ).getData()
-            );
-            oComponent.getRouter().navTo("register", { mode: sMode });
+            // The fetch shows itself as inbox busy, which blanks the table.
+            // Guard rather than queue a second one.
+            if (oComponent.getModel("inbox").getProperty("/busy")) { return; }
+
+            var oRow = oEvent.getParameter("listItem").getBindingContext("inbox").getObject();
+
+            oComponent.seedRegistrationFromInvite(oRow).done(function (oResult) {
+                if (!oResult.ok) {
+                    // Staying put beats opening a read-only form with nothing
+                    // but the invite's few fields in it — that is
+                    // indistinguishable from a request that really is empty.
+                    MessageBox.error(oResult.message || that._i18n("requestLoadErrorText"), {
+                        title: that._i18n("requestLoadErrorTitle")
+                    });
+                    return;
+                }
+                oComponent.getRouter().navTo("register", { mode: oResult.mode });
+            });
+        },
+
+        _i18n: function (sKey) {
+            return this.getView().getModel("i18n").getResourceBundle().getText(sKey);
         }
     });
 });

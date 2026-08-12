@@ -20,6 +20,13 @@ sap.ui.define([
             // country property rather than filtering only at startup.
             this._oCountryBinding = this._reg().bindProperty("/basic/primaryAddress/country");
             this._oCountryBinding.attachChange(this._filterRegionsByCountry, this);
+
+            // The property binding only fires when the country actually
+            // changes, so re-entering the wizard with the same country as last
+            // time would leave the region list untouched. Recomputing per entry
+            // is free, and it is what Banking does with its own rules.
+            this.getOwnerComponent().getRouter().getRoute("register")
+                .attachPatternMatched(this._filterRegionsByCountry, this);
         },
 
         onExit: function () {
@@ -28,6 +35,8 @@ sap.ui.define([
                 this._oCountryBinding.destroy();
                 this._oCountryBinding = null;
             }
+            this.getOwnerComponent().getRouter().getRoute("register")
+                .detachPatternMatched(this._filterRegionsByCountry, this);
         },
 
         _svc: function () { return this.getOwnerComponent().getService(); },
@@ -104,6 +113,9 @@ sap.ui.define([
         },
 
         _validateStep: function () {
+            // Nothing to validate on a read-only request — see Banking.
+            if (!this._reg().getProperty("/ui/editable")) { return true; }
+
             var oBasic = this._reg().getProperty("/basic");
             var oAddr  = oBasic.primaryAddress;
             var sVendorType = this._reg().getProperty("/vendorType");

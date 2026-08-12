@@ -83,11 +83,22 @@ sap.ui.define([
                     isUSPerson:           true,
                     w9FileName:           "",
                     w9DocId:              "",
+                    // displaycsdoc link for a document already on the request,
+                    // filled by VeRAService.mapRequestDetail. Empty for a new
+                    // registration and for a file the user has just uploaded —
+                    // there is nothing stored to link to yet.
+                    w9Url:                "",
                     doc590Name:           "",
                     doc590Id:             "",
+                    doc590Url:            "",
+                    // Carried because CT_FILES returns them, but with no UI:
+                    // the form has no W-8 / legal / support document section.
                     w8DocId:              "",
+                    w8FileName:           "",
                     legalDocId:           "",
+                    legalFileName:        "",
                     supportDocId:         "",
+                    supportFileName:      "",
                     taxCategory:          "TaxID",
                     taxIdNumber:          "",
                     ssnNumber:            "",
@@ -114,7 +125,8 @@ sap.ui.define([
                         swiftNum:      "",
                         ibanNum:       "",
                         bankFileName:  "",
-                        bankDocId:     ""
+                        bankDocId:     "",
+                        bankFileUrl:   ""
                     },
                     secondaryAccounts:    [],
                     paymentNotifications: []

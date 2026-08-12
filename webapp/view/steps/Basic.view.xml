@@ -65,9 +65,13 @@
                 <CheckBox id="acceptPO" selected="{reg>/basic/acceptPO}" select=".onAcceptPOChange"
                           enabled="{reg>/ui/editable}"/>
 
-                <Label text="{i18n>poEmailPlaceholder}" required="true" visible="{reg>/basic/acceptPO}"/>
+                <!-- Read-only requests show whatever was filled in, even where
+                     the field would normally be hidden by its own toggle. -->
+                <Label text="{i18n>poEmailPlaceholder}" required="true"
+                       visible="{= ${reg>/basic/acceptPO} || (!${reg>/ui/editable} &amp;&amp; !!${reg>/basic/poEmail}) }"/>
                 <Input id="poEmail" value="{reg>/basic/poEmail}" type="Email"
-                       visible="{reg>/basic/acceptPO}" liveChange=".onBasicFieldChange"
+                       visible="{= ${reg>/basic/acceptPO} || (!${reg>/ui/editable} &amp;&amp; !!${reg>/basic/poEmail}) }"
+                       liveChange=".onBasicFieldChange"
                        editable="{reg>/ui/editable}"
                        valueState="{= ${reg>/ui/basicTouched} &amp;&amp; ${reg>/basic/acceptPO} &amp;&amp; !${reg>/basic/poEmail} ? 'Error' : 'None'}"
                        valueStateText="PO Email is required when accepting purchase orders"/>

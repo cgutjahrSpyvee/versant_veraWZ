@@ -91,6 +91,9 @@ sap.ui.define([
         },
 
         _validateStep: function () {
+            // Nothing to validate on a read-only request — see Banking.
+            if (!this._reg().getProperty("/ui/editable")) { return true; }
+
             // Mark as touched so view shows inline error states
             this._reg().setProperty("/ui/taxTouched", true);
 

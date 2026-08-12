@@ -26,10 +26,17 @@
                 class="sapUiResponsiveMargin">
 
                 <noData>
+                    <!-- Base size: text only. The illustration art does not
+                         render here, and any larger size reserves its blank
+                         area above the title. -->
+                    <!-- illustrationType is a plain string, not an enum, so it
+                         needs the full "<set>-<type>" value. UI5 splits it on
+                         the dash; a bare "NoTasks" leaves the type undefined
+                         and throws while rendering, taking the page with it. -->
                     <IllustratedMessage
-                        illustrationType="NoTasks"
-                        title="{i18n>noOpenInvitesTitle}"
-                        description="{i18n>noOpenInvitesDescription}"/>
+                        illustrationType="sapIllus-NoTasks"
+                        illustrationSize="Base"
+                        title="{i18n>noOpenInvitesTitle}"/>
                 </noData>
 
                 <headerToolbar>
