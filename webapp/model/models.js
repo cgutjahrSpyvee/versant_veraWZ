@@ -37,6 +37,11 @@ sap.ui.define([
 
                 ui: {
                     busy:                       false,
+                    // False in display mode — an existing request whose status
+                    // does not allow editing. Set from /mode by
+                    // Registration.controller._onRouteMatched, which is the one
+                    // place that knows the route's mode.
+                    editable:                   true,
                     paymentMethods:             [],    // [{key,text}] allowed for this vendor type
                     paymentMethodLocked:        false, // vendor type offers no choice
                     bankCountryEditable:        true,

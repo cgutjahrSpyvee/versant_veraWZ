@@ -14,46 +14,11 @@
 
         <content>
 
-            <ObjectHeader
-                title="{= ${reg>/status} === 'APPROVED' ? ${i18n>statusApproved} :
-                          ${reg>/status} === 'REJECTED' ? ${i18n>statusRejected} :
-                          ${reg>/status} === 'PENDING'  ? ${i18n>statusPending}  :
-                          ${i18n>statusDraft}}"
-                responsive="true"
-                condensed="false"
-                icon="{= ${reg>/status} === 'APPROVED' ? 'sap-icon://accept'  :
-                          ${reg>/status} === 'REJECTED' ? 'sap-icon://decline' :
-                          ${reg>/status} === 'PENDING'  ? 'sap-icon://pending' :
-                          'sap-icon://edit'}"
-                iconDensityAware="false">
-
-                <statuses>
-                    <ObjectStatus
-                        text="{= ${reg>/status} === 'APPROVED' ? 'Approved' :
-                                  ${reg>/status} === 'REJECTED' ? 'Rejected' :
-                                  ${reg>/status} === 'PENDING'  ? 'In Review' : 'Draft'}"
-                        state="{= ${reg>/status} === 'APPROVED' ? 'Success' :
-                                   ${reg>/status} === 'REJECTED' ? 'Error'   :
-                                   ${reg>/status} === 'PENDING'  ? 'Warning' : 'None'}"/>
-                </statuses>
-
-                <attributes>
-                    <ObjectAttribute
-                        text="{= ${reg>/status} === 'APPROVED'
-                            ? ${i18n>statusApprovedDesc}
-                            : ${reg>/status} === 'REJECTED'
-                            ? ${i18n>statusRejectedDesc}
-                            : ${reg>/status} === 'PENDING'
-                            ? ${i18n>statusPendingDesc}
-                            : ${i18n>statusDraftDesc}}"/>
-                </attributes>
-
-            </ObjectHeader>
-
+            <!-- No status hero here: after submit the user is sent straight
+                 back to this list, and each row already carries its own status. -->
             <Panel
                 headerText="{i18n>myRequests}"
-                visible="{= ${inbox>/items}.length > 0}"
-                class="sapUiSmallMarginTop">
+                visible="{= ${inbox>/items}.length > 0}">
 
                 <Table
                     id="inboxTable"

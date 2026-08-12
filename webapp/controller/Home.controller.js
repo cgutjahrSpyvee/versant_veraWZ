@@ -184,20 +184,30 @@ sap.ui.define([
 
         /**
          * An invitation is the only way into the registration wizard, so
-         * opening a row seeds a fresh registration from that invite and
-         * navigates into the form.
+         * opening a row seeds a registration from that invite and navigates
+         * into the form.
+         *
+         * Which form depends on whether a request already sits behind the
+         * invite's REQST — VeRAService.resolveInviteTarget put that on the row
+         * as `mode`: "register" (empty form), "edit" or "display".
          */
         onInvitePress: function (oEvent) {
             var oComponent = this.getOwnerComponent();
             var oRow       = oEvent.getParameter("listItem").getBindingContext("inbox").getObject();
             var sEmail     = oComponent.getModel("reg").getProperty("/userEmail");
+            var sMode      = oRow.mode || "register";
 
+            // TODO: for "edit"/"display" the existing request's own data still
+            // has to be pulled in, which needs a JSON endpoint over
+            // Z_SFI_I510_VRA_VENDISP (see maintain_vendor.java). Until that
+            // exists the invite fields are all we can seed, so an existing
+            // request opens with the right mode but only the invite's data.
             oComponent.getModel("reg").setData(
                 models.createRegistrationModelFromInvite(
                     oRow.invite, sEmail, oRow.reqId
                 ).getData()
             );
-            oComponent.getRouter().navTo("register", { mode: "register" });
+            oComponent.getRouter().navTo("register", { mode: sMode });
         }
     });
 });

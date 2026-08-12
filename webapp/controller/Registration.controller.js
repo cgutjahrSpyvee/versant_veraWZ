@@ -12,15 +12,36 @@ sap.ui.define([
             oRouter.getRoute("register").attachPatternMatched(this._onRouteMatched, this);
         },
 
+        /**
+         * mode is "register" (empty form from an invite), "edit" (an existing
+         * request whose status still allows changes) or "display" (an existing
+         * request that is read-only). Home resolves it per the invite's REQST —
+         * see VeRAService.resolveInviteTarget.
+         */
         _onRouteMatched: function (oEvent) {
-            var sMode = oEvent.getParameter("arguments").mode || "register";
+            var sMode      = oEvent.getParameter("arguments").mode || "register";
+            var bEditable  = sMode !== "display";
+
             this._reg().setProperty("/mode", sMode);
+            this._reg().setProperty("/ui/editable", bEditable);
+
+            // Nothing is being filled in on a read-only request, so every step
+            // counts as validated — otherwise the wizard refuses to page past
+            // the first one and the rest of the request can't be seen.
+            if (!bEditable) {
+                this._reg().setProperty("/wizard/stepsValidated",
+                    this._reg().getProperty("/wizard/stepsValidated").map(function () {
+                        return true;
+                    }));
+            }
 
             var oWizard = this.byId("veraWizard");
             if (oWizard) {
                 oWizard.discardProgress(oWizard.getSteps()[0]);
             }
         },
+
+        _isEditable: function () { return this._reg().getProperty("/ui/editable"); },
 
         _svc:  function () { return this.getOwnerComponent().getService(); },
         _reg:  function () { return this.getOwnerComponent().getModel("reg"); },
@@ -72,6 +93,9 @@ sap.ui.define([
         // ── Wizard final submit ──────────────────────────────────────
 
         onWizardComplete: function () {
+            // The submit button is hidden in display mode; this is the backstop.
+            if (!this._isEditable()) { return; }
+
             var aValidated = this._reg().getProperty("/wizard/stepsValidated");
             if (!aValidated.every(function (v) { return v; })) {
                 MessageBox.error(this._i18n("validationErrorText"), {
@@ -127,6 +151,13 @@ sap.ui.define([
             var oWizard = this.byId("veraWizard");
             if (!oWizard) { return; }
 
+            // A read-only request is being paged through, not filled in, so
+            // there is nothing to validate and nothing to mark as touched.
+            if (!this._isEditable()) {
+                oWizard.nextStep();
+                return;
+            }
+
             var aSteps = oWizard.getSteps();
             var oCurrentStep = oWizard.getProgressStep();
             var iCurrentIndex = aSteps.indexOf(oCurrentStep);
@@ -175,6 +206,8 @@ sap.ui.define([
         // ── Save for Later ───────────────────────────────────────────
 
         onSaveForLater: function () {
+            if (!this._isEditable()) { return; }
+
             var that     = this;
             var oRegData = this._reg().getData();
             var oPayload = this._svc().buildSavePayload(oRegData, oRegData.requestId);

@@ -10,7 +10,7 @@
 
         <f:SimpleForm
             title="{i18n>taxClassification}"
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
@@ -22,6 +22,7 @@
                     id="entityTypeGroup"
                     selectedIndex="{= ${reg>/tax/entityType} === 'Entity' ? 0 : 1}"
                     select=".onEntityTypeSelect"
+                    enabled="{reg>/ui/editable}"
                     columns="2">
                     <buttons>
                         <RadioButton id="rbEntity"     text="{i18n>entity}"/>
@@ -35,6 +36,7 @@
                     id="usCitizenGroup"
                     selectedIndex="{= ${reg>/tax/isUSPerson} ? 0 : 1}"
                     select=".onUSPersonSelect"
+                    enabled="{reg>/ui/editable}"
                     columns="2"
                     visible="false">
                     <buttons>
@@ -47,7 +49,7 @@
 
         <f:SimpleForm
             title="{i18n>w9SectionTitle}"
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
@@ -59,6 +61,7 @@
                     <u:FileUploader
                         id="w9Uploader"
                         name="w9"
+                        visible="{reg>/ui/editable}"
                         fileType="pdf"
                         maximumFileSize="10"
                         change=".onW9FileChange"
@@ -90,7 +93,7 @@
 
         <f:SimpleForm
             title="{i18n>notice590Title}"
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
@@ -103,6 +106,7 @@
                     <u:FileUploader
                         id="uploader590"
                         name="590"
+                        visible="{reg>/ui/editable}"
                         fileType="pdf"
                         maximumFileSize="10"
                         change=".on590FileChange"
@@ -127,7 +131,7 @@
 
         <f:SimpleForm
             title="{i18n>taxCategoryTitle}"
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
@@ -137,7 +141,8 @@
                 <Label text="{i18n>taxIdType}" required="true"/>
                 <SegmentedButton
                     selectedKey="{reg>/tax/taxCategory}"
-                    selectionChange=".onTaxCategoryChange">
+                    selectionChange=".onTaxCategoryChange"
+                    enabled="{reg>/ui/editable}">
                     <items>
                         <SegmentedButtonItem key="TaxID" text="{i18n>taxID}"/>
                         <SegmentedButtonItem key="SSN"   text="{i18n>socialSecurityNumber}"/>
@@ -153,6 +158,7 @@
                     valueStateText="Tax ID is required"
                     maxLength="10"
                     visible="{= ${reg>/tax/taxCategory} === 'TaxID'}"
+                    editable="{reg>/ui/editable}"
                     liveChange=".onTaxFieldChange"
                     change=".onTaxIdBlur"/>
 
@@ -166,12 +172,14 @@
                     maxLength="11"
                     type="Password"
                     visible="{= ${reg>/tax/taxCategory} === 'SSN'}"
+                    editable="{reg>/ui/editable}"
                     liveChange=".onTaxFieldChange"/>
 
                 <Label text="{i18n>recipientType}" required="true"/>
                 <Select id="recipientType" selectedKey="{reg>/tax/recipientType}"
                         valueState="{= ${reg>/ui/taxTouched} &amp;&amp; !${reg>/tax/recipientType} ? 'Error' : 'None'}"
                         valueStateText="Recipient Type is required"
+                        enabled="{reg>/ui/editable}"
                         change=".onTaxFieldChange">
                     <items>
                         <core:Item key=""   text="{i18n>selectOne}"/>
@@ -189,6 +197,7 @@
                 <Select id="exemptPayee" selectedKey="{reg>/tax/exemptPayeeCode}"
                         valueState="{= ${reg>/ui/taxTouched} &amp;&amp; !${reg>/tax/exemptPayeeCode} ? 'Error' : 'None'}"
                         valueStateText="Exempt Payee Code is required"
+                        enabled="{reg>/ui/editable}"
                         change=".onTaxFieldChange">
                     <items>
                         <core:Item key=""   text="{i18n>selectOne}"/>

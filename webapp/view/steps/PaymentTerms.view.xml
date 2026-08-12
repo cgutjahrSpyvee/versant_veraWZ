@@ -9,7 +9,7 @@
 
         <f:SimpleForm
             title="{i18n>paymentTermsTitle}"
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
@@ -22,6 +22,7 @@
                     selectedKey="{reg>/paymentTerms/selected}"
                     items="{reg>/paymentTerms/availableTerms}"
                     change=".onPaymentTermSelect"
+                    enabled="{reg>/ui/editable}"
                     valueState="{= ${reg>/ui/paymentTermsTouched} &amp;&amp; !${reg>/paymentTerms/selected} ? 'Error' : 'None'}"
                     valueStateText="Payment Term is required">
                     <core:ListItem key="{reg>Key}" text="{reg>Description}"/>

@@ -14,11 +14,14 @@
 
         <content>
 
+            <!-- showNextButton also governs the wizard's own finish button, so
+                 binding it to /ui/editable takes Submit away in display mode.
+                 The footer's Next button stays, to page through read-only. -->
             <Wizard
                 id="veraWizard"
                 complete=".onWizardComplete"
                 finishButtonText="{i18n>btnSubmit}"
-                showNextButton="true">
+                showNextButton="{reg>/ui/editable}">
 
                 <WizardStep
                     id="stepBasic"
@@ -89,7 +92,8 @@
                     text="{i18n>btnSaveForLater}"
                     icon="sap-icon://save"
                     press=".onSaveForLater"
-                    type="Transparent" visible="false"/>
+                    type="Transparent" visible="false"
+                    enabled="{reg>/ui/editable}"/>
                 <Button
                     text="{i18n>btnCancel}"
                     press=".onCancel"

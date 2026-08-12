@@ -14,7 +14,8 @@
                     <Title text="{i18n>tabContacts}" level="H3"/>
                     <ToolbarSpacer/>
                     <Button icon="sap-icon://add" text="{i18n>btnAddContact}"
-                            press=".onAddContact" type="Transparent"/>
+                            press=".onAddContact" type="Transparent"
+                            visible="{reg>/ui/editable}"/>
                 </OverflowToolbar>
             </headerToolbar>
 
@@ -39,7 +40,7 @@
                 showSeparators="Inner">
                 <CustomListItem>
                     <f:SimpleForm
-                        editable="true"
+                        editable="{reg>/ui/editable}"
                         layout="ResponsiveGridLayout"
                         labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
                         columnsXL="2" columnsL="2" columnsM="1">
@@ -49,25 +50,28 @@
                                 <Title text="{reg>name}" level="H4"/>
                                 <ToolbarSpacer/>
                                 <Button icon="sap-icon://delete" type="Transparent"
-                                        press=".onRemoveContact" tooltip="{i18n>btnRemove}"/>
+                                        press=".onRemoveContact" tooltip="{i18n>btnRemove}"
+                                        visible="{reg>/ui/editable}"/>
                             </Toolbar>
                         </f:toolbar>
 
                         <f:content>
                             <Label text="{i18n>name}" required="true"/>
                             <Input value="{reg>name}" liveChange=".onContactFieldChange"
+                                   editable="{reg>/ui/editable}"
                                    valueState="{= ${reg>/ui/contactsTouched} &amp;&amp; !${reg>name} ? 'Error' : 'None'}"
                                    valueStateText="Contact name is required"/>
                             <Label text="{i18n>emailAddress}" required="true"/>
                             <Input value="{reg>email}" type="Email" liveChange=".onContactFieldChange"
+                                   editable="{reg>/ui/editable}"
                                    valueState="{= ${reg>/ui/contactsTouched} &amp;&amp; !${reg>email} ? 'Error' : 'None'}"
                                    valueStateText="Valid email address is required"/>
                             <Label text="{i18n>phoneNumber}"/>
-                            <Input value="{reg>phone}" type="Tel"/>
+                            <Input value="{reg>phone}" type="Tel" editable="{reg>/ui/editable}"/>
                             <Label text="{i18n>faxNumber}"/>
-                            <Input value="{reg>fax}" type="Tel"/>
+                            <Input value="{reg>fax}" type="Tel" editable="{reg>/ui/editable}"/>
                             <Label text="{i18n>department}"/>
-                            <Select selectedKey="{reg>department}">
+                            <Select selectedKey="{reg>department}" enabled="{reg>/ui/editable}">
                                 <items>
                                     <core:Item key=""        text="{i18n>selectOne}"/>
                                     <core:Item key="ACCT"    text="Accounting"/>

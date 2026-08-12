@@ -9,7 +9,7 @@
 
         <f:SimpleForm
             title="{i18n>vendorName}"
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
@@ -19,17 +19,19 @@
             <f:content>
                 <Label text="{i18n>legalName}" required="true"/>
                 <Input id="legalName" value="{reg>/basic/legalName}" liveChange=".onBasicFieldChange"
+                       editable="{reg>/ui/editable}"
                        valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/legalName} ? 'Error' : 'None'}"
                        valueStateText="Legal Name is required"/>
 
                 <Label text="{i18n>invoicingName}"/>
-                <Input id="invoicingName" value="{reg>/basic/invoicingName}" liveChange=".onBasicFieldChange"/>
+                <Input id="invoicingName" value="{reg>/basic/invoicingName}" liveChange=".onBasicFieldChange"
+                       editable="{reg>/ui/editable}"/>
             </f:content>
         </f:SimpleForm>
 
         <f:SimpleForm
             title="{i18n>additionalInformation}"
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
@@ -60,11 +62,13 @@
                 -->
 
                 <Label text="{i18n>acceptPO}"/>
-                <CheckBox id="acceptPO" selected="{reg>/basic/acceptPO}" select=".onAcceptPOChange"/>
+                <CheckBox id="acceptPO" selected="{reg>/basic/acceptPO}" select=".onAcceptPOChange"
+                          enabled="{reg>/ui/editable}"/>
 
                 <Label text="{i18n>poEmailPlaceholder}" required="true" visible="{reg>/basic/acceptPO}"/>
                 <Input id="poEmail" value="{reg>/basic/poEmail}" type="Email"
                        visible="{reg>/basic/acceptPO}" liveChange=".onBasicFieldChange"
+                       editable="{reg>/ui/editable}"
                        valueState="{= ${reg>/ui/basicTouched} &amp;&amp; ${reg>/basic/acceptPO} &amp;&amp; !${reg>/basic/poEmail} ? 'Error' : 'None'}"
                        valueStateText="PO Email is required when accepting purchase orders"/>
             </f:content>
@@ -72,7 +76,7 @@
 
         <f:SimpleForm
             title="{i18n>primaryAddress}"
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
@@ -82,6 +86,7 @@
                 <Label text="{i18n>country}" required="true"/>
                 <Select id="country" selectedKey="{reg>/basic/primaryAddress/country}"
                         forceSelection="false"
+                        enabled="{reg>/ui/editable}"
                         valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/country} ? 'Error' : 'None'}"
                         valueStateText="Country is required"
                         items="{ref>/countries}" change=".onCountryChange">
@@ -90,23 +95,28 @@
 
                 <Label text="{i18n>address1}" required="true"/>
                 <Input id="address1" value="{reg>/basic/primaryAddress/address1}" liveChange=".onBasicFieldChange"
+                       editable="{reg>/ui/editable}"
                        valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/address1} ? 'Error' : 'None'}"
                        valueStateText="Address Line 1 is required"/>
 
                 <Label text="{i18n>address2}"/>
-                <Input id="address2" value="{reg>/basic/primaryAddress/address2}" liveChange=".onBasicFieldChange"/>
+                <Input id="address2" value="{reg>/basic/primaryAddress/address2}" liveChange=".onBasicFieldChange"
+                       editable="{reg>/ui/editable}"/>
 
                 <Label text="{i18n>address3}"/>
-                <Input id="address3" value="{reg>/basic/primaryAddress/address3}" liveChange=".onBasicFieldChange"/>
+                <Input id="address3" value="{reg>/basic/primaryAddress/address3}" liveChange=".onBasicFieldChange"
+                       editable="{reg>/ui/editable}"/>
 
                 <Label text="{i18n>city}" required="true"/>
                 <Input id="city" value="{reg>/basic/primaryAddress/city}" liveChange=".onBasicFieldChange"
+                       editable="{reg>/ui/editable}"
                        valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/city} ? 'Error' : 'None'}"
                        valueStateText="City is required"/>
 
                 <Label text="{i18n>state}" required="true"/>
                 <Select id="state" selectedKey="{reg>/basic/primaryAddress/state}"
                         forceSelection="false"
+                        enabled="{reg>/ui/editable}"
                         valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/state} ? 'Error' : 'None'}"
                         valueStateText="State is required"
                         items="{ref>/regions}" change=".onBasicFieldChange">
@@ -116,6 +126,7 @@
                 <Label text="{i18n>zipCode}" required="true"/>
                 <Input id="zip" value="{reg>/basic/primaryAddress/zip}"
                        liveChange=".onBasicFieldChange" change=".onZipChange"
+                       editable="{reg>/ui/editable}"
                        valueState="{= ${reg>/ui/basicTouched} &amp;&amp; !${reg>/basic/primaryAddress/zip} ? 'Error' : 'None'}"
                        valueStateText="Zip Code is required"/>
             </f:content>
@@ -131,7 +142,8 @@
                 <OverflowToolbar>
                     <Title text="{i18n>secondaryAddresses}" level="H3"/>
                     <ToolbarSpacer/>
-                    <Select id="secondaryAddressType" selectedKey="" width="10rem">
+                    <Select id="secondaryAddressType" selectedKey="" width="10rem"
+                            visible="{reg>/ui/editable}">
                         <items>
                             <core:Item key=""         text="{i18n>selectOne}"/>
                             <core:Item key="MAILING"  text="Mailing"/>
@@ -141,7 +153,8 @@
                         </items>
                     </Select>
                     <Button icon="sap-icon://add" tooltip="{i18n>btnAddAddress}"
-                            press=".onAddSecondaryAddress" type="Transparent"/>
+                            press=".onAddSecondaryAddress" type="Transparent"
+                            visible="{reg>/ui/editable}"/>
                 </OverflowToolbar>
             </headerToolbar>
 
@@ -151,7 +164,7 @@
                   showSeparators="Inner">
                 <CustomListItem>
                     <f:SimpleForm
-                        editable="true"
+                        editable="{reg>/ui/editable}"
                         layout="ResponsiveGridLayout"
                         labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
                         columnsXL="2" columnsL="2" columnsM="1">
@@ -161,19 +174,24 @@
                                 <Title text="{reg>type}" level="H4"/>
                                 <ToolbarSpacer/>
                                 <Button icon="sap-icon://delete" type="Transparent"
-                                        press=".onRemoveSecondaryAddress" tooltip="{i18n>btnRemove}"/>
+                                        press=".onRemoveSecondaryAddress" tooltip="{i18n>btnRemove}"
+                                        visible="{reg>/ui/editable}"/>
                             </Toolbar>
                         </f:toolbar>
 
                         <f:content>
                             <Label text="{i18n>address1}" required="true"/>
-                            <Input value="{reg>address1}" liveChange=".onBasicFieldChange"/>
+                            <Input value="{reg>address1}" liveChange=".onBasicFieldChange"
+                                   editable="{reg>/ui/editable}"/>
                             <Label text="{i18n>city}" required="true"/>
-                            <Input value="{reg>city}" liveChange=".onBasicFieldChange"/>
+                            <Input value="{reg>city}" liveChange=".onBasicFieldChange"
+                                   editable="{reg>/ui/editable}"/>
                             <Label text="{i18n>state}" required="true"/>
-                            <Input value="{reg>state}" liveChange=".onBasicFieldChange"/>
+                            <Input value="{reg>state}" liveChange=".onBasicFieldChange"
+                                   editable="{reg>/ui/editable}"/>
                             <Label text="{i18n>zipCode}" required="true"/>
-                            <Input value="{reg>zip}" liveChange=".onBasicFieldChange"/>
+                            <Input value="{reg>zip}" liveChange=".onBasicFieldChange"
+                                   editable="{reg>/ui/editable}"/>
                         </f:content>
                     </f:SimpleForm>
                 </CustomListItem>

@@ -64,6 +64,61 @@ sap.ui.define([
         "V": { text: "Pending TAX Review",            state: "Warning", reg: "PENDING",  actions: "CA", edit: "D", open: true  }
     };
 
+    // INVSTAT codes on inviteREQData — the IT_INVITE_REQ ("inbox") rows that
+    // wz_services?Action=inviteInfo returns alongside the invites. This is the
+    // registration request's own status; the invite's ZZSF_VRA_INVSTAT above is
+    // FYI only once a request exists.
+    //
+    // `text` is ported from inbox.java, which reads the same field.
+    //
+    // `edit` is narrower than the portal's own request-row rule. vra_inbox.java
+    // renders a pencil for S, R, D, F, X and Y; the decision here is that an
+    // existing request is display-only in every status except a rejection, so
+    // only the three rejections open for editing:
+    //   R  Rejected        D  Rejected (auto)        Y  IC Reject
+    // S (Pending Submission), F (Failed) and X (W8 Validation Failed) are
+    // deliberately display-only despite the portal allowing edits.
+    //   edit: E = editable, D = display only
+    var REQUEST_STATUS = {
+        "S": { text: "Pending Submission",         state: "Warning", reg: "DRAFT",    edit: "D", open: true  },
+        "A": { text: "In Review",                  state: "Warning", reg: "PENDING",  edit: "D", open: true  },
+        "W": { text: "Pending Approval",           state: "Warning", reg: "PENDING",  edit: "D", open: true  },
+        "R": { text: "Rejected",                   state: "Error",   reg: "REJECTED", edit: "E", open: true  },
+        "D": { text: "Rejected",                   state: "Error",   reg: "REJECTED", edit: "E", open: true  },
+        "F": { text: "Failed",                     state: "Error",   reg: "REJECTED", edit: "D", open: true  },
+        "X": { text: "W8 Validation Failed",       state: "Error",   reg: "PENDING",  edit: "D", open: true  },
+        "Y": { text: "IC Reject",                  state: "Error",   reg: "REJECTED", edit: "E", open: true  },
+        "P": { text: "Completed",                  state: "Success", reg: "APPROVED", edit: "D", open: false },
+        "O": { text: "Request Cancelled",          state: "None",    reg: "DRAFT",    edit: "D", open: false },
+        "I": { text: "Pending IC Approval",        state: "Warning", reg: "PENDING",  edit: "D", open: true  },
+        "E": { text: "Pending IC & Term Approval", state: "Warning", reg: "PENDING",  edit: "D", open: true  },
+        "M": { text: "Pending Mgmt. Approval",     state: "Warning", reg: "PENDING",  edit: "D", open: true  },
+        "T": { text: "Pending Term Approval",      state: "Warning", reg: "PENDING",  edit: "D", open: true  },
+        "U": { text: "Pending W8 Submission",      state: "Warning", reg: "PENDING",  edit: "D", open: true  },
+        "V": { text: "Pending TAX Review",         state: "Warning", reg: "PENDING",  edit: "D", open: true  },
+        "Z": { text: "Pending W8 Validation",      state: "Warning", reg: "PENDING",  edit: "D", open: true  }
+    };
+
+    /**
+     * REQST is zero-padded to ten characters on some tables and not on others,
+     * so the two sides of the join are compared on the number itself. Stripping
+     * the padding also collapses the backend's "no request" sentinel
+     * "0000000000" (inbox.java:85) to "", which is what the callers test for.
+     */
+    function normaliseReqId(vId) {
+        return String(vId === null || vId === undefined ? "" : vId)
+            .trim().replace(/^0+/, "");
+    }
+
+    /**
+     * INVSTAT 0-9 are invite-lifecycle codes: the inbox row is still tracking
+     * the invitation itself, so there is no registration request behind the id
+     * yet. Every other code is a request-lifecycle code — see REQUEST_STATUS.
+     */
+    function isInviteLifecycle(sCode) {
+        return /^[0-9]$/.test(String(sCode || "").trim());
+    }
+
     // Check if the user is accessing the application outside of WZ
     if (sModulePath === ".") {
         BASE = window.location.pathname.replace(/\/[^/]*$/, "/") + "vera-portal/";
@@ -191,10 +246,101 @@ sap.ui.define([
                 Log.warning("VeRAService: unmapped ZZSF_VRA_INVSTAT '" + sCode + "'");
                 return {
                     code: sKey, text: sKey, state: "None",
-                    reg: "PENDING", actions: "", edit: ""
+                    reg: "PENDING", actions: "", edit: "", open: true
                 };
             }
             return jQuery.extend({ code: sKey }, oEntry);
+        },
+
+        /**
+         * INVSTAT code on an inviteREQData row → { code, text, state, reg,
+         * edit, open }. Unknown codes fall through showing the raw code and are
+         * treated as display-only, so a new backend status can never silently
+         * open a request for editing.
+         */
+        mapRequestStatus: function (sCode) {
+            var sKey   = String(sCode || "").trim().toUpperCase();
+
+            // An inbox row can still be carrying the invitation's own status
+            // (0-9) when no request has been raised behind the id yet. That is
+            // expected, not an unmapped code, so it reads from INVITE_STATUS.
+            if (isInviteLifecycle(sKey)) {
+                return this.mapInviteStatus(sKey);
+            }
+
+            var oEntry = REQUEST_STATUS[sKey];
+            if (!oEntry) {
+                Log.warning("VeRAService: unmapped inviteREQData INVSTAT '" + sCode + "'");
+                return {
+                    code: sKey, text: sKey, state: "None",
+                    reg: "PENDING", edit: "D", open: true
+                };
+            }
+            return jQuery.extend({ code: sKey }, oEntry);
+        },
+
+        /**
+         * inviteREQData (IT_INVITE_REQ) rows → the request records an invite is
+         * matched against. These rows carry no ZZSF_VRA_EMLID, so REQST is the
+         * only key back to an invite — see resolveInviteTarget.
+         *
+         * @param   {object[]} aRows raw inviteREQData records
+         * @returns {object[]} mapped request rows
+         */
+        mapRequests: function (aRows) {
+            return (aRows || []).map(function (oRow) {
+                return {
+                    reqId:    oRow.REQST     || "",
+                    source:   oRow.SOURCE    || "",
+                    name:     oRow.VEND_NAME || "",
+                    vendorId: oRow.LIFNR     || "",
+                    status:   this.mapRequestStatus(oRow.INVSTAT),
+                    date:     this._formatChanged(oRow.CHANGE_DATE, oRow.CHANGE_TIME),
+                    request:  oRow
+                };
+            }, this);
+        },
+
+        /**
+         * Which form an invite row opens, and the status to show for it.
+         *
+         * The request id on the invite (REQST, joined in from vadminData) is
+         * matched against the inbox rows:
+         *   no match                → new request, empty form  ("register")
+         *   match, invite code 0-9  → no request raised yet, empty form too
+         *   match, request status   → existing request; "edit" for a rejection,
+         *                             "display" for everything else
+         *
+         * The 0-9 carve-out matters because a matching REQST is not on its own
+         * proof of a request: the sample response has REQST 0000111601 on both
+         * sides with INVSTAT "5" (Pending Vendor Action), meaning the invite
+         * has been sent and the vendor has filled in nothing. Matching on REQST
+         * alone would open that display-only against an empty form.
+         *
+         * @param   {object}   oRow      a mapped invite row, carrying reqId
+         * @param   {object[]} aRequests mapRequests output
+         * @returns {object} { mode, request, status } to merge onto the row
+         */
+        resolveInviteTarget: function (oRow, aRequests) {
+            var sWanted = normaliseReqId(oRow && oRow.reqId);
+
+            var oMatch = sWanted && (aRequests || []).filter(function (oReq) {
+                return normaliseReqId(oReq.reqId) === sWanted;
+            })[0];
+
+            if (!oMatch || isInviteLifecycle(oMatch.status.code)) {
+                return {
+                    mode:    "register",
+                    request: null,
+                    status:  oRow.inviteStatus
+                };
+            }
+
+            return {
+                mode:    oMatch.status.edit === "E" ? "edit" : "display",
+                request: oMatch,
+                status:  oMatch.status
+            };
         },
 
         /**
@@ -206,30 +352,47 @@ sap.ui.define([
          * invite with no vadminData match simply has no request yet, and gets
          * an empty reqId rather than a missing property.
          *
-         * @param   {object} oData the { inviteData, vadminData } response
+         * Each row then picks up `mode`, `request` and the effective `status`
+         * from resolveInviteTarget — `status` is the request's once one exists,
+         * and the invite's own status stays on `inviteStatus` as FYI.
+         *
+         * @param   {object} oData the { inviteData, vadminData, inviteREQData } response
          * @returns {object[]} mapped rows, in the order the backend returned them
          */
         mapInvites: function (oData) {
-            var aInvites = (oData && oData.inviteData) || [];
-            var aVAdmin  = (oData && oData.vadminData) || [];
+            var aInvites  = (oData && oData.inviteData) || [];
+            var aVAdmin   = (oData && oData.vadminData) || [];
+            var aRequests = this.mapRequests(oData && oData.inviteREQData);
 
+            // vadminData is versioned (VERSN), so an invite can appear more
+            // than once. Which version carries the live REQST is not settled,
+            // so this keeps the long-standing last-wins behaviour but says so
+            // out loud when the versions actually disagree.
             var mRequestByInvite = {};
             aVAdmin.forEach(function (oRow) {
-                if (oRow && oRow.ZZSF_VRA_EMLID && oRow.REQST) {
-                    mRequestByInvite[oRow.ZZSF_VRA_EMLID] = oRow.REQST;
+                if (!oRow || !oRow.ZZSF_VRA_EMLID || !oRow.REQST) { return; }
+                var sPrev = mRequestByInvite[oRow.ZZSF_VRA_EMLID];
+                if (sPrev && normaliseReqId(sPrev) !== normaliseReqId(oRow.REQST)) {
+                    Log.warning("VeRAService: vadminData has conflicting REQST for invite " +
+                        oRow.ZZSF_VRA_EMLID + " — '" + sPrev + "' then '" + oRow.REQST +
+                        "'; using the later row.");
                 }
+                mRequestByInvite[oRow.ZZSF_VRA_EMLID] = oRow.REQST;
             });
 
             return aInvites.map(function (oInv) {
-                return this.mapInviteRow(
+                var oMapped = this.mapInviteRow(
                     oInv,
                     mRequestByInvite[oInv.ZZSF_VRA_EMLID] || ""
                 );
+                return jQuery.extend(oMapped, this.resolveInviteTarget(oMapped, aRequests));
             }, this);
         },
 
         /**
-         * One inviteData row → a table row.
+         * One inviteData row → a table row. Carries `inviteStatus` only; the
+         * effective `status` is added by mapInvites via resolveInviteTarget,
+         * because it depends on whether a request exists behind the reqId.
          *
          * @param {object} oInv       raw inviteData record
          * @param {string} sRequestId REQST for this invite, "" if none yet
@@ -244,7 +407,8 @@ sap.ui.define([
                 name:    oInv.VEND_NAME      || "",
                 type:    oInv.VEND_DESC      || "",
                 contact: [oInv.FIRST_NAME, oInv.LAST_NAME].filter(Boolean).join(" "),
-                status:  this.mapInviteStatus(oInv.ZZSF_VRA_INVSTAT),
+                // FYI only once a request exists — see resolveInviteTarget.
+                inviteStatus: this.mapInviteStatus(oInv.ZZSF_VRA_INVSTAT),
                 date:    this._formatChanged(oInv.CHANGE_DATE, oInv.CHANGE_TIME),
                 invite:  oInv
             };

@@ -10,7 +10,7 @@
 
         <f:SimpleForm
             title="{i18n>primaryAccount}"
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
             adjustLabelSpan="false"
@@ -23,7 +23,7 @@
                 <SegmentedButton
                     id="primaryMethodToggle"
                     selectedKey="{reg>/banking/primaryAccount/method}"
-                    enabled="{= !${reg>/ui/paymentMethodLocked} }"
+                    enabled="{= ${reg>/ui/editable} &amp;&amp; !${reg>/ui/paymentMethodLocked} }"
                     selectionChange=".onPrimaryMethodChange"
                     items="{reg>/ui/paymentMethods}">
                     <items>
@@ -35,7 +35,7 @@
                 <Label text="{i18n>bankCountry}" required="true" visible="false"/>
                 <Select id="primaryCountry" selectedKey="{reg>/banking/primaryAccount/country}"
                         change=".onBankingFieldChange" visible="false"
-                        enabled="{reg>/ui/bankCountryEditable}">
+                        enabled="{= ${reg>/ui/editable} &amp;&amp; ${reg>/ui/bankCountryEditable} }">
                     <items>
                         <core:Item key="US"    text="United States"/>
                         <core:Item key="CA"    text="Canada"/>
@@ -56,6 +56,7 @@
                     valueStateText="Routing Number is required"
                     maxLength="9"
                     visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
+                    editable="{reg>/ui/editable}"
                     liveChange=".onBankingFieldChange"/>
 
                 <Label text="{i18n>bankAccountNum}" required="true"
@@ -67,6 +68,7 @@
                     valueStateText="Account Number is required"
                     maxLength="17"
                     visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
+                    editable="{reg>/ui/editable}"
                     liveChange=".onBankingFieldChange"/>
 
                 <Label text="{i18n>accountHolderName}" required="true"
@@ -77,6 +79,7 @@
                     valueState="{= ${reg>/ui/bankingTouched} &amp;&amp; ${reg>/banking/primaryAccount/method} !== 'Check' &amp;&amp; !${reg>/banking/primaryAccount/holderName} ? 'Error' : 'None'}"
                     valueStateText="Account Holder Name is required"
                     visible="{= ${reg>/banking/primaryAccount/method} !== 'Check'}"
+                    editable="{reg>/ui/editable}"
                     liveChange=".onBankingFieldChange"/>
 
                 <Label text="{i18n>uploadBankDetailsForm}"/>
@@ -84,6 +87,7 @@
                     <u:FileUploader
                         id="primaryBankFileUploader"
                         name="bankDetails"
+                        visible="{reg>/ui/editable}"
                         fileType="pdf,jpg,png"
                         maximumFileSize="10"
                         change=".onPrimaryBankFileChange"
@@ -111,7 +115,8 @@
                     <Title text="{i18n>secondaryAccounts}" level="H3"/>
                     <ToolbarSpacer/>
                     <Button icon="sap-icon://add" tooltip="{i18n>btnAddAccount}"
-                            press=".onAddSecondaryAccount" type="Transparent"/>
+                            press=".onAddSecondaryAccount" type="Transparent"
+                            visible="{reg>/ui/editable}"/>
                 </OverflowToolbar>
             </headerToolbar>
 
@@ -122,7 +127,7 @@
                 showSeparators="Inner">
                 <CustomListItem>
                     <f:SimpleForm
-                        editable="true"
+                        editable="{reg>/ui/editable}"
                         layout="ResponsiveGridLayout"
                         labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
                         columnsXL="2" columnsL="2" columnsM="1">
@@ -132,7 +137,8 @@
                                 <Title text="{i18n>account}" level="H4"/>
                                 <ToolbarSpacer/>
                                 <Button icon="sap-icon://delete" type="Transparent"
-                                        press=".onRemoveSecondaryAccount" tooltip="{i18n>btnRemove}"/>
+                                        press=".onRemoveSecondaryAccount" tooltip="{i18n>btnRemove}"
+                                        visible="{reg>/ui/editable}"/>
                             </Toolbar>
                         </f:toolbar>
 
@@ -142,6 +148,7 @@
                                  primary account. -->
                             <SegmentedButton
                                 selectedKey="{reg>method}"
+                                enabled="{reg>/ui/editable}"
                                 items="{reg>/ui/paymentMethods}">
                                 <items>
                                     <SegmentedButtonItem key="{reg>key}" text="{reg>text}"/>
@@ -150,7 +157,8 @@
 
                             <!-- Bank country - hidden for US-only scope -->
                             <Label text="{i18n>bankCountry}" required="true" visible="false"/>
-                            <Select selectedKey="{reg>country}" visible="false">
+                            <Select selectedKey="{reg>country}" visible="false"
+                                    enabled="{reg>/ui/editable}">
                                 <items>
                                     <core:Item key="US"    text="United States"/>
                                     <core:Item key="CA"    text="Canada"/>
@@ -160,11 +168,14 @@
                             </Select>
 
                             <Label text="{i18n>bankRoutingNum}" required="true"/>
-                            <Input value="{reg>routingNum}" maxLength="9"/>
+                            <Input value="{reg>routingNum}" maxLength="9"
+                                   editable="{reg>/ui/editable}"/>
                             <Label text="{i18n>bankAccountNum}" required="true"/>
-                            <Input value="{reg>accountNum}" maxLength="17"/>
+                            <Input value="{reg>accountNum}" maxLength="17"
+                                   editable="{reg>/ui/editable}"/>
                             <Label text="{i18n>accountHolderName}" required="true"/>
-                            <Input value="{reg>holderName}"/>
+                            <Input value="{reg>holderName}"
+                                   editable="{reg>/ui/editable}"/>
                         </f:content>
                     </f:SimpleForm>
                 </CustomListItem>
@@ -174,7 +185,7 @@
         <Panel headerText="{i18n>paymentNotifications}" expandable="true" expanded="false">
 
             <VBox class="sapUiMediumMargin">
-                <HBox alignItems="End">
+                <HBox alignItems="End" visible="{reg>/ui/editable}">
                     <Input
                         id="newNotificationEmail"
                         value="{reg>/ui/newNotificationEmail}"
@@ -200,7 +211,8 @@
                                 <Text text="{reg>email}"/>
                             </HBox>
                             <Button icon="sap-icon://delete" type="Transparent"
-                                    press=".onRemoveNotificationEmail" tooltip="{i18n>btnRemove}"/>
+                                    press=".onRemoveNotificationEmail" tooltip="{i18n>btnRemove}"
+                                    visible="{reg>/ui/editable}"/>
                         </HBox>
                     </CustomListItem>
                 </List>

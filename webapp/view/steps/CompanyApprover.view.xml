@@ -9,7 +9,7 @@
 
         <!-- Company Code Selection -->
         <f:SimpleForm
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
             emptySpanXL="4" emptySpanL="4" emptySpanM="4"
@@ -27,16 +27,19 @@
                         placeholder="{i18n>companyCodePlaceholder}"
                         maxLength="4"
                         width="10rem"
+                        editable="{reg>/ui/editable}"
                         submit=".onSearchCompanyCodes"/>
                     <Button
                         text="{i18n>btnSearch}"
                         icon="sap-icon://search"
                         press=".onSearchCompanyCodes"
+                        visible="{reg>/ui/editable}"
                         class="sapUiSmallMarginBegin"/>
                 </HBox>
 
                 <Label text="{i18n>selectedCompanyCodes}"/>
                 <Tokenizer id="companyCodeTokenizer"
+                    editable="{reg>/ui/editable}"
                     tokenDelete=".onCompanyCodeRemove">
                 </Tokenizer>
 
@@ -51,7 +54,7 @@
 
         <!-- Approver Selection -->
         <f:SimpleForm
-            editable="true"
+            editable="{reg>/ui/editable}"
             layout="ResponsiveGridLayout"
             labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
             emptySpanXL="4" emptySpanL="4" emptySpanM="4"
@@ -66,7 +69,7 @@
                 <Label text="{i18n>approver}"/>
                 <Select id="approverSelect"
                     selectedKey="{reg>/approverSSO}"
-                    enabled="{= ${reg>/companyCodes}.length > 0}"
+                    enabled="{= ${reg>/ui/editable} &amp;&amp; ${reg>/companyCodes}.length > 0}"
                     change=".onApproverChange">
                     <items>
                         <core:Item key="" text="{i18n>selectOne}"/>
