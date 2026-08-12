@@ -58,8 +58,12 @@ sap.ui.define([
 
         /**
          * Fills the "inbox" model from wz_services?Action=inviteInfo for the
-         * signed-in user. Owned by the Component rather than a controller so
-         * Home and Status share one fetch and one copy of the data.
+         * signed-in user. Owned by the Component rather than the Home
+         * controller because the first fetch starts during init, before any
+         * view exists.
+         *
+         * The whole set is stored; Home narrows it to the open ones with a
+         * binding filter on status/open.
          *
          * Resolves with the mapped rows; resolves with [] on any failure,
          * having already reported it. Never rejects.
@@ -74,11 +78,7 @@ sap.ui.define([
 
             var fnDone = function (aItems, sError) {
                 oInbox.setProperty("/busy", false);
-                oInbox.setProperty("/loaded", true);
                 oInbox.setProperty("/items", aItems);
-                oInbox.setProperty("/open", aItems.filter(function (o) {
-                    return o.status.open;
-                }));
                 if (sError) { MessageBox.error(sError); }
                 oDeferred.resolve(aItems);
             };

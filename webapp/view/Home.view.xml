@@ -13,10 +13,14 @@
 
             <!-- A registration can only start from an invitation, so the invite
                  list is the whole home screen: it carries the status and is the
-                 way into the wizard. -->
+                 way into the wizard.
+
+                 Bound to the whole set; the Open/All segment below narrows it
+                 with a binding filter on status/open, which is what used to be
+                 a second page. -->
             <Table
-                id="openInvitesTable"
-                items="{inbox>/open}"
+                id="invitesTable"
+                items="{inbox>/items}"
                 mode="SingleSelectMaster"
                 itemPress=".onInvitePress"
                 growing="true"
@@ -36,13 +40,25 @@
                     <IllustratedMessage
                         illustrationType="sapIllus-NoTasks"
                         illustrationSize="Base"
-                        title="{i18n>noOpenInvitesTitle}"/>
+                        title="{= ${inbox>/filter} === 'all' ? ${i18n>noRequestsTitle} : ${i18n>noOpenInvitesTitle} }"/>
                 </noData>
 
                 <headerToolbar>
                     <Toolbar>
-                        <Title text="{i18n>openInvites}" level="H2"/>
+                        <Title text="{i18n>myRequests}" level="H2"/>
                         <ToolbarSpacer/>
+                        <!-- Open hides the settled requests (completed,
+                             cancelled, registered); All shows everything the
+                             backend returned. -->
+                        <SegmentedButton
+                            id="inviteFilter"
+                            selectedKey="{inbox>/filter}"
+                            selectionChange=".onInviteFilterChange">
+                            <items>
+                                <SegmentedButtonItem key="open" text="{i18n>filterOpen}"/>
+                                <SegmentedButtonItem key="all"  text="{i18n>filterAll}"/>
+                            </items>
+                        </SegmentedButton>
                         <!-- TEST ONLY — impersonate another user's email so the
                              invite list can be checked without re-signing-in. -->
                         <Button

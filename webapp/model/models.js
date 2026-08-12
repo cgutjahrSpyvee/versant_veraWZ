@@ -200,10 +200,13 @@ sap.ui.define([
 
         createInboxModel: function () {
             return new JSONModel({
-                items:  [],   // every invite returned for the user
-                open:   [],   // subset still in flight — what Home shows
+                items:  [],       // every invite returned for the user
                 busy:   false,
-                loaded: false
+                // Which subset the list shows: "open" (still in flight) or
+                // "all". Held here rather than on the SegmentedButton because
+                // the status route sets it before the view exists — see
+                // Home.controller._onRouteMatched.
+                filter: "open"
             });
         }
     };

@@ -8,9 +8,11 @@ sap.ui.define([
     "sap/m/MessageToast",
     "sap/m/Text",
     "sap/ui/layout/form/SimpleForm",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator",
     "vsnt/vera/model/appInfo"
 ], function (Controller, Dialog, Button, Input, Label, MessageBox, MessageToast, Text,
-             SimpleForm, appInfo) {
+             SimpleForm, Filter, FilterOperator, appInfo) {
     "use strict";
 
     var rEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,11 +20,18 @@ sap.ui.define([
     return Controller.extend("vsnt.vera.controller.Home", {
 
         onInit: function () {
+            var oRouter = this.getOwnerComponent().getRouter();
+
             // The Component starts the first fetch during init; refresh on every
             // return to Home so a just-submitted invite shows up.
-            this.getOwnerComponent().getRouter()
-                .getRoute("home").attachPatternMatched(this._onRouteMatched, this);
+            //
+            // "status" is an alias for this page, kept so the #VeRA-status
+            // intent and the post-submit redirect still resolve. It differs
+            // only in landing on the All filter.
+            oRouter.getRoute("home").attachPatternMatched(this._onRouteMatched, this);
+            oRouter.getRoute("status").attachPatternMatched(this._onRouteMatched, this);
 
+            this._applyInviteFilter();
             this._showVersionOnButton();
         },
 
@@ -105,7 +114,14 @@ sap.ui.define([
             this._oAppInfoDialog.open();
         },
 
-        _onRouteMatched: function () {
+        _onRouteMatched: function (oEvent) {
+            // Arriving on the status alias means "show me everything" — that
+            // entry point has always listed the settled requests too.
+            if (oEvent.getParameter("name") === "status") {
+                this._inbox().setProperty("/filter", "all");
+            }
+            this._applyInviteFilter();
+
             // The Component already fetched for the first render; only refetch
             // when the user comes back to Home, and never while one is in flight.
             if (!this._bFirstMatchSeen) {
@@ -120,6 +136,30 @@ sap.ui.define([
             if (!oComponent.getModel("inbox").getProperty("/busy")) {
                 oComponent.loadInvites();
             }
+        },
+
+        onInviteFilterChange: function () { this._applyInviteFilter(); },
+
+        _inbox: function () { return this.getOwnerComponent().getModel("inbox"); },
+
+        /**
+         * Narrows the list to the open requests, or shows the lot.
+         *
+         * status/open is set per status code in VeRAService's lookup tables and
+         * is false only for the settled end states — completed, cancelled and
+         * registered. Filtering here rather than keeping a second pre-filtered
+         * array means one copy of the data and one place the rule lives.
+         */
+        _applyInviteFilter: function () {
+            var oTable   = this.byId("invitesTable");
+            var oBinding = oTable && oTable.getBinding("items");
+            if (!oBinding) { return; }
+
+            // Safe to set before the rows arrive — a client binding re-applies
+            // its filters whenever the model data changes.
+            oBinding.filter(this._inbox().getProperty("/filter") === "all"
+                ? []
+                : [new Filter("status/open", FilterOperator.EQ, true)]);
         },
 
         /**

@@ -96,12 +96,11 @@
       "routes": [
         { "name": "home",     "pattern": "",                "target": "home" },
         { "name": "register", "pattern": "register/{mode}", "target": "registration" },
-        { "name": "status",   "pattern": "status",          "target": "status" }
+        { "name": "status",   "pattern": "status",          "target": "home" }
       ],
       "targets": {
         "home":         { "viewName": "Home",         "viewLevel": 1 },
-        "registration": { "viewName": "Registration", "viewLevel": 2 },
-        "status":       { "viewName": "Status",       "viewLevel": 1 }
+        "registration": { "viewName": "Registration", "viewLevel": 2 }
       }
     },
     "contentDensities": { "compact": true, "cozy": true },
