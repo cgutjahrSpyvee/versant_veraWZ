@@ -51,6 +51,17 @@ sap.ui.define([
         };
     }
 
+    // IT_EMSG — the backend's notes on a row. Which id it is keyed on is the
+    // open question the tolerant join in VeRAService.mapInvites works around,
+    // so the caller passes both fields explicitly and the fixtures below cover
+    // each convention. MSGTY comes back blank from the live service.
+    function mockMessage(sReqst, sEmlId, sSeq, sText) {
+        return {
+            MANDT: "", REQST: sReqst, VERSN: "000", SEQNO: sSeq,
+            ZZSF_VRA_EMLID: sEmlId, MSGTY: "", MESSAGE: sText
+        };
+    }
+
     // ── displayRequest row builders ────────────────────────────────────────
     // The response is a raw dump of the Z_SFI_I510_VRA_VENDISP export tables,
     // so each builder is one table row with every field the mapper reads.
@@ -286,6 +297,26 @@ sap.ui.define([
                         mockRequest("0000111602", "R", "Rejected Vendor Co"),
                         mockRequest("0000111603", "W", "In Flight Vendor"),
                         mockRequest("0000111605", "P", "Finished Vendor")
+                    ],
+                    // The notes shown under a row's status. Keyed both ways on
+                    // purpose — see mockMessage and the join in mapInvites.
+                    inviteIT_EMSG: [
+                        // 2 (rejected) — keyed the way the live payload does it:
+                        // REQST holds the *invite* id, EMLID is the sentinel.
+                        // Out of SEQNO order here, to prove the sort.
+                        mockMessage("0000610085", "0000000000", "0000000002",
+                            "Tax form not legible"),
+                        mockMessage("0000610085", "0000000000", "0000000001",
+                            "Banking details do not match the account name"),
+                        // 3 (in flight) — keyed the inbox.java:85 way, on the
+                        // request number.
+                        mockMessage("0000111603", "0000000000", "0000000001",
+                            "Awaiting proof of insurance"),
+                        // Neither id belongs to any invite → warns and is dropped.
+                        mockMessage("0000999999", "0000000000", "0000000001",
+                            "Orphaned message, should not appear"),
+                        // Blank MESSAGE → skipped before it ever reaches a row.
+                        mockMessage("0000610085", "0000000000", "0000000003", "   ")
                     ]
                 })
             ]);

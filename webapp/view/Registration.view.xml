@@ -14,6 +14,18 @@
 
         <content>
 
+            <!-- Why the request came back: the backend's IT_EMSG notes, carried
+                 over from the inbox row. Above the wizard rather than in a step,
+                 because they are about the request as a whole and have to stay
+                 readable while the vendor pages through fixing it. -->
+            <MessageStrip
+                type="Error"
+                showIcon="true"
+                showCloseButton="false"
+                text="{reg>/messagesText}"
+                visible="{= !!${reg>/messagesText} }"
+                class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop veraMessageStrip"/>
+
             <!-- showNextButton also governs the wizard's own finish button, so
                  binding it to /ui/editable takes Submit away in display mode.
                  The footer's Next button stays, to page through read-only. -->

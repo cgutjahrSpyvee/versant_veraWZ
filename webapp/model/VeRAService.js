@@ -112,6 +112,50 @@ sap.ui.define([
     }
 
     /**
+     * Every id an IT_EMSG row could be keyed on, normalised, blanks dropped.
+     *
+     * inbox.java:85-91 has REQST as the request number, with "0000000000"
+     * meaning "no request, this belongs to an invite" and the key falling back
+     * to ZZSF_VRA_EMLID + "01". The live inviteInfo payload does it the other
+     * way round: the message rows carry REQST "0000610084" — the *invite* id —
+     * with ZZSF_VRA_EMLID "0000000000", while the request behind that invite is
+     * 0000111601. Rather than pick a side, both ends of the join publish every
+     * id they hold and a message sticks on any overlap; mapInvites warns when a
+     * row matches nothing, which is what will tell us the settled convention.
+     */
+    function messageKeys() {
+        var mSeen = {};
+        var aKeys = [];
+        Array.prototype.forEach.call(arguments, function (vId) {
+            var sKey = normaliseReqId(vId);
+            if (!sKey || mSeen[sKey]) { return; }
+            mSeen[sKey] = true;
+            aKeys.push(sKey);
+        });
+        return aKeys;
+    }
+
+    /**
+     * The notes on one row as a single block of text, so they read as one
+     * message rather than a stack of separate ones. A lone note is left as it
+     * is; two or more are bulleted, the same way Registration.controller lists
+     * the fields still to fill in. The newlines need help to survive rendering
+     * — see renderWhitespace on the popover Text and .veraMessageStrip in
+     * css/vera.css.
+     *
+     * @param   {object[]} aMessages mapInviteMessages output for one row
+     * @returns {string} "" when there are none
+     */
+    function joinMessages(aMessages) {
+        if (aMessages.length < 2) {
+            return aMessages.length ? aMessages[0].text : "";
+        }
+        return aMessages.map(function (oMsg) {
+            return "• " + oMsg.text;
+        }).join("\n");
+    }
+
+    /**
      * INVSTAT 0-9 are invite-lifecycle codes: the inbox row is still tracking
      * the invitation itself, so there is no registration request behind the id
      * yet. Every other code is a request-lifecycle code — see REQUEST_STATUS.
@@ -407,6 +451,39 @@ sap.ui.define([
         },
 
         /**
+         * inviteIT_EMSG (IT_EMSG) rows → the backend notes shown against an
+         * inbox row: why a request was rejected, what needs re-submitting.
+         *
+         * Severity is not read. inbox.java takes only REQST, ZZSF_VRA_EMLID and
+         * MESSAGE off the table, vra_inbox.java:293 renders every one of them in
+         * the same red panel, and the live payload returns MSGTY "" — so MSGTY
+         * is carried through unmapped and the UI paints them all as errors. The
+         * day the backend starts filling it in, this is where it gets mapped.
+         *
+         * @param   {object} oData the whole inviteInfo response
+         * @returns {object[]} mapped message rows, in SEQNO order
+         */
+        mapInviteMessages: function (oData) {
+            // The servlet publishes the RFC's table under a prefixed name;
+            // accept the bare one too so a rename does not silently drop them.
+            var aRows = (oData && (oData.inviteIT_EMSG || oData.IT_EMSG)) || [];
+
+            return aRows.filter(function (oRow) {
+                return oRow && String(oRow.MESSAGE || "").trim();
+            }).map(function (oRow) {
+                return {
+                    text:  String(oRow.MESSAGE).trim(),
+                    // Zero-padded in the payload, so compared as a number.
+                    seq:   parseInt(oRow.SEQNO, 10) || 0,
+                    msgty: oRow.MSGTY || "",
+                    keys:  messageKeys(oRow.REQST, oRow.ZZSF_VRA_EMLID)
+                };
+            }).sort(function (oLeft, oRight) {
+                return oLeft.seq - oRight.seq;
+            });
+        },
+
+        /**
          * A whole inviteInfo response → the rows the Home and Status tables
          * bind to.
          *
@@ -417,15 +494,17 @@ sap.ui.define([
          *
          * Each row then picks up `mode`, `request` and the effective `status`
          * from resolveInviteTarget — `status` is the request's once one exists,
-         * and the invite's own status stays on `inviteStatus` as FYI.
+         * and the invite's own status stays on `inviteStatus` as FYI — plus any
+         * `messages` the backend attached to it.
          *
-         * @param   {object} oData the { inviteData, vadminData, inviteREQData } response
+         * @param   {object} oData the { inviteData, vadminData, inviteREQData, inviteIT_EMSG } response
          * @returns {object[]} mapped rows, in the order the backend returned them
          */
         mapInvites: function (oData) {
             var aInvites  = (oData && oData.inviteData) || [];
             var aVAdmin   = (oData && oData.vadminData) || [];
             var aRequests = this.mapRequests(oData && oData.inviteREQData);
+            var aMessages = this.mapInviteMessages(oData);
 
             // vadminData is versioned (VERSN), so an invite can appear more
             // than once. Which version carries the live REQST is not settled,
@@ -449,17 +528,55 @@ sap.ui.define([
                 };
             });
 
-            return aInvites.map(function (oInv) {
+            // Which messages were claimed, so the ones that matched no invite
+            // can be named below rather than disappearing quietly.
+            var mClaimed = {};
+
+            var aRows = aInvites.map(function (oInv) {
                 var oAdmin  = mRequestByInvite[oInv.ZZSF_VRA_EMLID] || {};
                 var oMapped = this.mapInviteRow(oInv, oAdmin.reqId, oAdmin.sso);
-                return jQuery.extend(oMapped, this.resolveInviteTarget(oMapped, aRequests));
+                jQuery.extend(oMapped, this.resolveInviteTarget(oMapped, aRequests));
+
+                // Both ids the row answers to, plus the EMLID + "01" form
+                // inbox.java:88 builds for a message with no request behind it.
+                var aRowKeys = messageKeys(oMapped.reqId, oMapped.id, oMapped.id + "01");
+
+                oMapped.messages = aMessages.filter(function (oMsg, iMsg) {
+                    var bMine = oMsg.keys.some(function (sKey) {
+                        return aRowKeys.indexOf(sKey) !== -1;
+                    });
+                    if (bMine) {
+                        if (mClaimed[iMsg]) {
+                            Log.warning("VeRAService: message '" + oMsg.text +
+                                "' matches more than one invite — also on " +
+                                oMapped.id + "; the join keys are ambiguous.");
+                        }
+                        mClaimed[iMsg] = true;
+                    }
+                    return bMine;
+                });
+                oMapped.messageCount = oMapped.messages.length;
+                oMapped.messagesText = joinMessages(oMapped.messages);
+
+                return oMapped;
             }, this);
+
+            aMessages.forEach(function (oMsg, iMsg) {
+                if (mClaimed[iMsg]) { return; }
+                Log.warning("VeRAService: message '" + oMsg.text + "' matches no " +
+                    "invite — its keys are [" + oMsg.keys.join(", ") + "] and no " +
+                    "row answers to any of them; it will not be shown.");
+            });
+
+            return aRows;
         },
 
         /**
          * One inviteData row → a table row. Carries `inviteStatus` only; the
          * effective `status` is added by mapInvites via resolveInviteTarget,
          * because it depends on whether a request exists behind the reqId.
+         * `messages` and `messageCount` are added there too, for the same
+         * reason: the join needs the reqId this row has just been given.
          *
          * @param {object} oInv       raw inviteData record
          * @param {string} sRequestId REQST for this invite, "" if none yet

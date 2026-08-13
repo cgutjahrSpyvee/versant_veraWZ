@@ -6,13 +6,14 @@ sap.ui.define([
     "sap/m/Label",
     "sap/m/MessageBox",
     "sap/m/MessageToast",
+    "sap/m/Popover",
     "sap/m/Text",
     "sap/ui/layout/form/SimpleForm",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
     "vsnt/vera/model/appInfo"
-], function (Controller, Dialog, Button, Input, Label, MessageBox, MessageToast, Text,
-             SimpleForm, Filter, FilterOperator, appInfo) {
+], function (Controller, Dialog, Button, Input, Label, MessageBox, MessageToast, Popover,
+             Text, SimpleForm, Filter, FilterOperator, appInfo) {
     "use strict";
 
     var rEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -267,8 +268,52 @@ sap.ui.define([
             });
         },
 
-        _i18n: function (sKey) {
-            return this.getView().getModel("i18n").getResourceBundle().getText(sKey);
+        /**
+         * How many notes the backend left on a row, for the link that opens
+         * them. Returns "" at zero — the link is hidden there anyway, but a
+         * bound formatter still runs.
+         */
+        formatMessageCount: function (iCount) {
+            if (!iCount) { return ""; }
+            return this._i18n(iCount === 1 ? "messageCountOne" : "messageCountOther",
+                [iCount]);
+        },
+
+        /**
+         * The notes themselves, in a popover anchored to the link that asked
+         * for them. Built here rather than in the view because it is one
+         * throw-away control per press, like the About dialog above.
+         */
+        onShowMessages: function (oEvent) {
+            var that  = this;
+            var oLink = oEvent.getSource();
+            var oRow  = oLink.getBindingContext("inbox").getObject();
+
+            if (this._oMessagePopover) { this._oMessagePopover.destroy(); }
+
+            this._oMessagePopover = new Popover({
+                title: this._i18n("messagesPopoverTitle"),
+                placement: "Auto",
+                contentWidth: "22rem",
+                content: [
+                    // renderWhitespace keeps the newlines joinMessages put
+                    // between the bullets; without it they collapse to spaces.
+                    new Text({ text: oRow.messagesText, renderWhitespace: true })
+                        .addStyleClass("sapUiSmallMargin")
+                ],
+                afterClose: function () {
+                    that._oMessagePopover.destroy();
+                    that._oMessagePopover = null;
+                }
+            }).addStyleClass(this.getOwnerComponent().getContentDensityClass());
+
+            this.getView().addDependent(this._oMessagePopover);
+            this._oMessagePopover.openBy(oLink);
+        },
+
+        _i18n: function (sKey, aArgs) {
+            return this.getView().getModel("i18n").getResourceBundle()
+                .getText(sKey, aArgs);
         }
     });
 });

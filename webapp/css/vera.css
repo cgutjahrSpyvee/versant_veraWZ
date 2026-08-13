@@ -11,3 +11,15 @@
 .sapMWizardStepContainer {
     padding: 1rem 0;
 }
+
+/*
+ * Backend notes are combined into one string with newlines between the
+ * bullets (VeRAService.joinMessages). sap.m.Text has renderWhitespace for
+ * that; MessageStrip has nothing equivalent, and which control it renders
+ * its text with is internal, so the rule is applied to the strip and
+ * everything inside it rather than guessing at an inner class.
+ */
+.veraMessageStrip,
+.veraMessageStrip * {
+    white-space: pre-line;
+}

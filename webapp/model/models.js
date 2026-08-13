@@ -34,6 +34,12 @@ sap.ui.define([
                 annualSpend:   "",
                 requestedFor:  "",
                 status:        "DRAFT",
+                // The backend's notes on this request (IT_EMSG), copied off the
+                // inbox row by Component.seedRegistrationFromInvite. Always set
+                // so the Registration view can bind them unconditionally;
+                // messagesText is the combined form the MessageStrip shows.
+                messages:      [],
+                messagesText:  "",
 
                 ui: {
                     busy:                       false,

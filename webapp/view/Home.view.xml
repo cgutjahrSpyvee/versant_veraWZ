@@ -100,9 +100,26 @@
                                  invitation's own id is inbox>id. -->
                             <ObjectIdentifier title="{inbox>reqId}" text="{inbox>type}"/>
                             <Text text="{inbox>name}"/>
-                            <ObjectStatus
-                                text="{inbox>status/text}"
-                                state="{inbox>status/state}"/>
+                            <!-- The backend's notes on the request (IT_EMSG)
+                                 hang off the status they explain — a count
+                                 here, the text itself in a popover — so the
+                                 row stays one line and the status badge stays
+                                 the only coloured thing in it. Sitting in this
+                                 cell, the link travels with the status into
+                                 the popin on a phone.
+
+                                 A Link marks its own press event, so opening
+                                 the popover does not also fire itemPress and
+                                 navigate into the wizard. -->
+                            <VBox>
+                                <ObjectStatus
+                                    text="{inbox>status/text}"
+                                    state="{inbox>status/state}"/>
+                                <Link
+                                    text="{ path: 'inbox>messageCount', formatter: '.formatMessageCount' }"
+                                    visible="{= ${inbox>messageCount} > 0 }"
+                                    press=".onShowMessages"/>
+                            </VBox>
                             <Text text="{inbox>date}"/>
                         </cells>
                     </ColumnListItem>

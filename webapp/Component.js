@@ -178,6 +178,11 @@ sap.ui.define([
 
             oSeed.mode        = sMode;
             oSeed.ui.editable = bEditable;
+            // The backend's notes on this request, carried over from the inbox
+            // row so they stay on screen while the vendor acts on them. oSeed
+            // is the base for all three modes, so one assignment covers them.
+            oSeed.messages     = (oRow && oRow.messages) || [];
+            oSeed.messagesText = (oRow && oRow.messagesText) || "";
             if (!bEditable) {
                 oSeed.wizard.stepsValidated =
                     oSeed.wizard.stepsValidated.map(function () { return true; });
