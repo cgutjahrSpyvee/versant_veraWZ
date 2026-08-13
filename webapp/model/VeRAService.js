@@ -120,6 +120,23 @@ sap.ui.define([
         return /^[0-9]$/.test(String(sCode || "").trim());
     }
 
+    /**
+     * What a request was for, stamped onto its jqXHR so a failure can name it.
+     * The full URL is the point of it: the backend segment carries the app
+     * version, so seeing the path that 404'd is what identifies a browser
+     * running a stale build.
+     */
+    function describeRequest(sMethod, sService, oParams, oBody) {
+        var sQuery = oParams ? jQuery.param(oParams) : "";
+        return {
+            method:  sMethod,
+            service: sService,
+            action:  (oParams && oParams.Action) || (oBody && oBody.Action) ||
+                     (oParams && oParams.type) || "",
+            url:     BASE + sService + (sQuery ? "?" + sQuery : "")
+        };
+    }
+
     // Check if the user is accessing the application outside of WZ
     if (sModulePath === ".") {
         BASE = window.location.pathname.replace(/\/[^/]*$/, "/") + "vera-portal/";
@@ -1163,15 +1180,22 @@ sap.ui.define([
             var that = this;
             Log.debug("VeRAService GET " + sService, JSON.stringify(oParams));
             return this._fetchCsrfToken().then(function () {
-                return jQuery.ajax({
+                var oXhr = jQuery.ajax({
                     url:  BASE + sService,
                     type: "GET",
                     data: oParams,
                     dataType: "json",
                     timeout: 30000,
                     headers: that._csrfHeaders()
-                }).fail(function (jqXHR, sStatus, sError) {
-                    Log.error("VeRAService GET failed: " + sService + " — " + sError);
+                });
+                // The jqXHR carries no record of what was asked for, and by the
+                // time a caller's fail handler runs that is exactly what it
+                // needs to report. See model/serviceError.js, which reads this.
+                oXhr.veraRequest = describeRequest("GET", sService, oParams);
+                return oXhr.fail(function (jqXHR, sStatus, sError) {
+                    Log.error("VeRAService GET failed: " + oXhr.veraRequest.url +
+                        " — HTTP " + jqXHR.status + " " + sStatus +
+                        (sError ? " (" + sError + ")" : ""));
                 });
             });
         },
@@ -1180,15 +1204,21 @@ sap.ui.define([
             var that = this;
             Log.debug("VeRAService POST " + sService, JSON.stringify(oData));
             return this._fetchCsrfToken().then(function () {
-                return jQuery.ajax({
+                var oXhr = jQuery.ajax({
                     url:  BASE + sService,
                     type: "POST",
                     data: oData,
                     dataType: "json",
                     timeout: 30000,
                     headers: that._csrfHeaders()
-                }).fail(function (jqXHR, sStatus, sError) {
-                    Log.error("VeRAService POST failed: " + sService + " — " + sError);
+                });
+                // Body params are deliberately not put in the URL here — a POST
+                // payload can carry the whole registration.
+                oXhr.veraRequest = describeRequest("POST", sService, null, oData);
+                return oXhr.fail(function (jqXHR, sStatus, sError) {
+                    Log.error("VeRAService POST failed: " + oXhr.veraRequest.url +
+                        " — HTTP " + jqXHR.status + " " + sStatus +
+                        (sError ? " (" + sError + ")" : ""));
                 });
             });
         }

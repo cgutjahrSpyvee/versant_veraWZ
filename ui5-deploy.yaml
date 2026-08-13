@@ -20,6 +20,12 @@ builder:
     excludes:
       - "**/node_modules/**"
   customTasks:
+    # Stamps a unique applicationVersion into the built manifest so every deploy
+    # lands on a new Work Zone URL segment and no browser can serve a stale
+    # index.html. Must precede generateComponentPreload — manifest.json is
+    # bundled into Component-preload.js.
+    - name: stamp-app-version
+      beforeTask: generateComponentPreload
     - name: ui5-task-zipper
       afterTask: generateCachebusterInfo
       configuration:
@@ -27,3 +33,11 @@ builder:
         relativePaths: true
         additionalFiles:
           - xs-app.json
+---
+specVersion: "4.0"
+kind: extension
+type: task
+metadata:
+  name: stamp-app-version
+task:
+  path: lib/tasks/stampAppVersion.js

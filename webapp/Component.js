@@ -9,8 +9,10 @@ sap.ui.define([
     "sap/base/Log",
     "vsnt/vera/model/models",
     "vsnt/vera/model/VeRAService",
-    "vsnt/vera/model/appInfo"
-], function (UIComponent, Device, MessageBox, Log, models, VeRAService, appInfo) {
+    "vsnt/vera/model/appInfo",
+    "vsnt/vera/model/serviceError"
+], function (UIComponent, Device, MessageBox, Log, models, VeRAService, appInfo,
+             serviceError) {
     "use strict";
 
     return UIComponent.extend("vsnt.vera.Component", {
@@ -76,16 +78,30 @@ sap.ui.define([
 
             oInbox.setProperty("/busy", true);
 
-            var fnDone = function (aItems, sError) {
+            // oDiag is a serviceError description: its headline goes on screen
+            // next to sError so a screenshot alone says why, and its details
+            // fill the dialog's collapsed "Show details" section.
+            var fnDone = function (aItems, sError, oDiag) {
                 oInbox.setProperty("/busy", false);
                 oInbox.setProperty("/items", aItems);
-                if (sError) { MessageBox.error(sError); }
+                if (sError) {
+                    MessageBox.error(
+                        sError + (oDiag ? "\n\n" + oDiag.headline : ""),
+                        {
+                            title:   that._i18nText("inviteLoadErrorTitle"),
+                            details: oDiag ? oDiag.details : undefined,
+                            contentWidth: "35rem"
+                        }
+                    );
+                }
                 oDeferred.resolve(aItems);
             };
 
             // wz_services keys the list off the signed-in user's email, which
             // arrives asynchronously from the FLP UserInfo service.
             this.getUserInfo().done(function (oUser) {
+                var oContext = { User: oUser.email || "(no email from UserInfo)" };
+
                 oSvc.getInviteInfo(oUser.email)
                     .done(function (oData) {
                         if (oData && oData.code !== "0") {
@@ -107,14 +123,16 @@ sap.ui.define([
                             aItems = oSvc.mapInvites(oData);
                         } catch (e) {
                             Log.error("Component: failed to map invite data — " + e.message);
-                            fnDone([], "Could not read your invitations.");
+                            fnDone([], that._i18nText("inviteReadErrorText"),
+                                serviceError.describeData(e, oData, oContext));
                             return;
                         }
                         fnDone(aItems);
                         that._syncRegStatus(aItems);
                     })
-                    .fail(function () {
-                        fnDone([], "Could not load your invitations. Please refresh.");
+                    .fail(function (jqXHR, sStatus, sError) {
+                        fnDone([], that._i18nText("inviteLoadErrorText"),
+                            serviceError.describe(jqXHR, sStatus, sError, oContext));
                     });
             });
 
@@ -165,10 +183,14 @@ sap.ui.define([
                     oSeed.wizard.stepsValidated.map(function () { return true; });
             }
 
-            var fnDone = function (oData, sError) {
+            var fnDone = function (oData, sError, oDiag) {
                 oInbox.setProperty("/busy", false);
                 if (sError) {
-                    oDeferred.resolve({ ok: false, mode: sMode, message: sError });
+                    // diag is optional — a missing request reference is a data
+                    // problem with nothing technical to show. Home renders it.
+                    oDeferred.resolve({
+                        ok: false, mode: sMode, message: sError, diag: oDiag || null
+                    });
                     return;
                 }
                 that.getModel("reg").setData(oData);
@@ -192,6 +214,10 @@ sap.ui.define([
             }
 
             oInbox.setProperty("/busy", true);
+
+            // Which row was being opened — the first thing anyone reading a
+            // report of this failure will want to look up in the backend.
+            var oDiagContext = { Invite: oRow.id || "", Request: oRow.reqId || "" };
 
             // Captured here rather than read out of the jQuery.when below,
             // which flattens a multi-argument resolution (an ajax deferred
@@ -219,12 +245,14 @@ sap.ui.define([
                 } catch (e) {
                     Log.error("Component: failed to map request " + oRow.reqId +
                         " — " + e.message);
-                    fnDone(null, that._i18nText("requestLoadErrorText"));
+                    fnDone(null, that._i18nText("requestLoadErrorText"),
+                        serviceError.describeData(e, oResponse, oDiagContext));
                     return;
                 }
                 fnDone(oData);
-            }).fail(function () {
-                fnDone(null, that._i18nText("networkErrorText"));
+            }).fail(function (jqXHR, sStatus, sError) {
+                fnDone(null, that._i18nText("networkErrorText"),
+                    serviceError.describe(jqXHR, sStatus, sError, oDiagContext));
             });
 
             return oDeferred.promise();

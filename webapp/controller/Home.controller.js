@@ -248,9 +248,19 @@ sap.ui.define([
                     // Staying put beats opening a read-only form with nothing
                     // but the invite's few fields in it — that is
                     // indistinguishable from a request that really is empty.
-                    MessageBox.error(oResult.message || that._i18n("requestLoadErrorText"), {
-                        title: that._i18n("requestLoadErrorTitle")
-                    });
+                    // oResult.diag is present only for a technical failure —
+                    // its headline names the cause on screen, its details go in
+                    // the dialog's "Show details" section for a ticket.
+                    var oDiag = oResult.diag;
+                    MessageBox.error(
+                        (oResult.message || that._i18n("requestLoadErrorText")) +
+                            (oDiag ? "\n\n" + oDiag.headline : ""),
+                        {
+                            title:   that._i18n("requestLoadErrorTitle"),
+                            details: oDiag ? oDiag.details : undefined,
+                            contentWidth: "35rem"
+                        }
+                    );
                     return;
                 }
                 oComponent.getRouter().navTo("register", { mode: oResult.mode });

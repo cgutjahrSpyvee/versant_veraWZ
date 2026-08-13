@@ -6,13 +6,18 @@
  *
  * Three pieces, because no single one is enough:
  *
- *   version    sap.app.applicationVersion from the manifest. Semantic, but it
- *              only moves when someone bumps it — and it must be bumped in
- *              lockstep with mta.yaml, since VeRAService derives the backend
- *              path from it.
+ *   version    sap.app.applicationVersion from the manifest. In a deployed
+ *              build this is "<major>.<minor>.<build number>" — lib/tasks/
+ *              stampAppVersion.js replaces the patch with a build number on
+ *              every CF build, so it is unique per deploy. It is also the tail
+ *              of the Work Zone path segment the app is served from, which is
+ *              what keeps browsers off a cached copy of the previous deploy.
+ *              The patch you see here is therefore NOT the hand-maintained one
+ *              in webapp/manifest.json; that lives in git. A local build keeps
+ *              the plain semver.
  *   buildToken The Work Zone cachebuster token out of the module path. Changes
- *              on every deploy, so it is what actually distinguishes two
- *              deployments of the same version.
+ *              on every deploy, so it distinguishes two deployments even if the
+ *              version somehow did not move.
  *   buildTime  Stamp the UI5 build writes into sap-ui-cachebuster-info.json.
  *              Human-readable, and the thing worth reading out loud.
  *
@@ -28,7 +33,10 @@ sap.ui.define([
     var oCached = null;
 
     // In Work Zone the module path looks like
-    //   /<site-id>.<cloud-service>.<app-id>-<version>/~<cachebuster>~/...
+    //   /<site-id>.<cloud-service>.<app-id>/~<cachebuster>~/...
+    // Note there is no version in that segment — confirmed off a live request:
+    // the app is *served* from the version-less path, while the backend routes
+    // sit under "<same segment>-<version>", which is why VeRAService appends it.
     // Served locally it is just /resources/vsnt/vera, with no token at all.
     function parseModulePath() {
         var sPath  = sap.ui.require.toUrl("vsnt/vera") || "";
@@ -46,7 +54,11 @@ sap.ui.define([
          * Synchronous identity — everything except the build stamp, which needs
          * a fetch. Memoised; safe to call from anywhere.
          *
-         * @param   {sap.ui.core.UIComponent} oComponent the app component
+         * The component is only needed for the version. Callers that have no
+         * handle on it — the error path, which just wants to name the build —
+         * may omit it and get whatever the Component's own call already cached.
+         *
+         * @param   {sap.ui.core.UIComponent} [oComponent] the app component
          * @returns {object} { version, buildToken, appSegment, modulePath, buildTime }
          */
         get: function (oComponent) {
@@ -59,6 +71,18 @@ sap.ui.define([
                                      .applicationVersion.version || "";
             } catch (e) {
                 Log.warning("appInfo: no applicationVersion in the manifest.");
+            }
+
+            // A component-less call before init would otherwise cache an empty
+            // version for the lifetime of the app.
+            if (!oComponent) {
+                return {
+                    version:    "",
+                    buildToken: oPath.token,
+                    appSegment: oPath.segment,
+                    modulePath: oPath.path,
+                    buildTime:  ""
+                };
             }
 
             oCached = {
@@ -86,9 +110,19 @@ sap.ui.define([
                 url:      sap.ui.require.toUrl("vsnt/vera/sap-ui-cachebuster-info.json"),
                 dataType: "json"
             }).done(function (oInfo) {
-                // One epoch-ms entry per file; manifest.json is written on every
-                // build, so it stands in for "when this bundle was made".
-                var iStamp = oInfo && oInfo["manifest.json"];
+                // One epoch-ms entry per file — but the entries are each
+                // resource's *source* mtime, not the time of the build. Most
+                // files are copied through, so their stamp is whenever someone
+                // last edited them: manifest.json used to be read here and
+                // reported the date of the last manual manifest edit, which is
+                // not what anyone means by "built at".
+                //
+                // Component-preload.js is generated from scratch on every
+                // build, so its mtime is the only entry that is genuinely the
+                // build time. Fall back to manifest.json for a build that
+                // somehow has no preload.
+                var iStamp = oInfo && (oInfo["Component-preload.js"] ||
+                                       oInfo["manifest.json"]);
                 var sOut   = "";
                 if (iStamp) {
                     sOut = DateFormat.getDateTimeInstance({ style: "medium" })
