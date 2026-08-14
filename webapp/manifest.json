@@ -5,7 +5,7 @@
     "type": "application",
     "title": "Versant Vendor Workzone - Vendor Registration Application",
     "description": "Versant Vendor Workzone",
-    "applicationVersion": { "version": "0.7.5" },
+    "applicationVersion": { "version": "0.9.0" },
     "sourceTemplate": {
       "id": "@sap/generator-fiori:basic",
       "version": "1.0.0"

@@ -8,12 +8,13 @@ sap.ui.define([
     "sap/m/MessageToast",
     "sap/m/Popover",
     "sap/m/Text",
+    "sap/m/VBox",
     "sap/ui/layout/form/SimpleForm",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
     "vsnt/vera/model/appInfo"
 ], function (Controller, Dialog, Button, Input, Label, MessageBox, MessageToast, Popover,
-             Text, SimpleForm, Filter, FilterOperator, appInfo) {
+             Text, VBox, SimpleForm, Filter, FilterOperator, appInfo) {
     "use strict";
 
     var rEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -296,10 +297,19 @@ sap.ui.define([
                 placement: "Auto",
                 contentWidth: "22rem",
                 content: [
-                    // renderWhitespace keeps the newlines joinMessages put
-                    // between the bullets; without it they collapse to spaces.
-                    new Text({ text: oRow.messagesText, renderWhitespace: true })
-                        .addStyleClass("sapUiSmallMargin")
+                    // One Text per note rather than joinMessages' single
+                    // string: a note long enough to wrap needs its runover
+                    // lines indented past the bullet, and that is per-item
+                    // padding no amount of renderWhitespace on one shared
+                    // Text can produce. A lone note gets no bullet at all.
+                    new VBox({
+                        items: (oRow.messages || []).map(function (oMsg, iIdx, aAll) {
+                            var oText = new Text({ text: oMsg.text });
+                            return aAll.length > 1
+                                ? oText.addStyleClass("veraMessageBullet")
+                                : oText;
+                        })
+                    }).addStyleClass("sapUiSmallMargin veraMessageList")
                 ],
                 afterClose: function () {
                     that._oMessagePopover.destroy();

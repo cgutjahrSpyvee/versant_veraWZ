@@ -23,3 +23,28 @@
 .veraMessageStrip * {
     white-space: pre-line;
 }
+
+/*
+ * A note in the messages popover, when there is more than one. The bullet is
+ * the ::before rather than a character in the text so that a note long enough
+ * to wrap keeps its runover lines under the first word instead of back at the
+ * margin. Spacing between notes is left to the VBox.
+ */
+.veraMessageBullet {
+    display: block;
+    padding-left: 1rem;
+    text-indent: -1rem;
+}
+
+.veraMessageBullet::before {
+    content: "• ";
+}
+
+/*
+ * Set on the VBox rather than as a margin on the notes: FlexBox wraps each
+ * item in a div of its own, so the notes are not siblings in the DOM and an
+ * adjacent-sibling rule would never match.
+ */
+.veraMessageList {
+    gap: 0.375rem;
+}

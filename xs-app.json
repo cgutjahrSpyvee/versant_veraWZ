@@ -36,8 +36,8 @@
       "destination": "ui5"
     },
     {
-      "source": "^(.*)(index\\.html|manifest\\.json)$",
-      "target": "$1$2",
+      "source": "^(?!.*/~[^~/]+~/)(.*)$",
+      "target": "$1",
       "service": "html5-apps-repo-rt",
       "authenticationType": "xsuaa",
       "cacheControl": "no-store, must-revalidate"

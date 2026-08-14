@@ -181,6 +181,59 @@ sap.ui.define([
         };
     }
 
+    var CONTROL_ESCAPES = {
+        "\b": "\\b", "\f": "\\f", "\n": "\\n", "\r": "\\r", "\t": "\\t"
+    };
+
+    /**
+     * Escape raw control characters that appear *inside* JSON string literals.
+     *
+     * The portal writes free text — rejection reasons, invite comments — into
+     * its JSON without escaping, so an approver who presses Enter mid-sentence
+     * puts a bare CR/LF in the payload. JSON.parse rejects that, and jQuery
+     * reports the whole 200 response as a parsererror. Control characters
+     * outside strings are legal whitespace and are left alone, so structure
+     * (including pretty-printed responses) is untouched.
+     */
+    function escapeControlChars(sText) {
+        var bInString = false, bEscaped = false, aOut = [], i, sChar, iCode;
+        for (i = 0; i < sText.length; i++) {
+            sChar = sText.charAt(i);
+            if (bEscaped) {
+                bEscaped = false;
+            } else if (bInString && sChar === "\\") {
+                bEscaped = true;
+            } else if (sChar === "\"") {
+                bInString = !bInString;
+            } else if (bInString) {
+                iCode = sText.charCodeAt(i);
+                if (iCode < 0x20) {
+                    aOut.push(CONTROL_ESCAPES[sChar] ||
+                        "\\u" + ("000" + iCode.toString(16)).slice(-4));
+                    continue;
+                }
+            }
+            aOut.push(sChar);
+        }
+        return aOut.join("");
+    }
+
+    // Handed to jQuery in place of its own "text json" converter. The happy
+    // path is still a plain JSON.parse; only a payload that would otherwise
+    // have failed pays for the repair pass.
+    var JSON_CONVERTERS = {
+        "text json": function (sText) {
+            try {
+                return JSON.parse(sText);
+            } catch (oErr) {
+                var oData = JSON.parse(escapeControlChars(sText));
+                Log.warning("VeRAService: repaired unescaped control " +
+                    "character(s) in JSON response (" + oErr.message + ")");
+                return oData;
+            }
+        }
+    };
+
     // Check if the user is accessing the application outside of WZ
     if (sModulePath === ".") {
         BASE = window.location.pathname.replace(/\/[^/]*$/, "/") + "vera-portal/";
@@ -243,6 +296,7 @@ sap.ui.define([
                 url:  BASE + "htmlhelper?type=displayApproverList&" + aPairs.join("&"),
                 type: "GET",
                 dataType: "json",
+                converters: JSON_CONVERTERS,
                 headers: this._csrfHeaders()
             });
         },
@@ -472,7 +526,14 @@ sap.ui.define([
                 return oRow && String(oRow.MESSAGE || "").trim();
             }).map(function (oRow) {
                 return {
-                    text:  String(oRow.MESSAGE).trim(),
+                    // ABAP long text arrives pre-wrapped at its own line width,
+                    // so the reason an approver typed as one sentence comes
+                    // back with hard breaks in the middle of it. Those used to
+                    // be invisible (they broke the parse outright — see
+                    // escapeControlChars); now that the text survives, collapse
+                    // the wrapping so it re-flows to whatever width it is shown
+                    // at instead of snapping mid-phrase.
+                    text:  String(oRow.MESSAGE).replace(/\s+/g, " ").trim(),
                     // Zero-padded in the payload, so compared as a number.
                     seq:   parseInt(oRow.SEQNO, 10) || 0,
                     msgty: oRow.MSGTY || "",
@@ -1115,6 +1176,7 @@ sap.ui.define([
                 // no content type, so jQuery would otherwise hand back a
                 // string and every .id read would come out undefined.
                 dataType: "json",
+                converters: JSON_CONVERTERS,
                 headers: this._csrfHeaders()
             });
         },
@@ -1302,6 +1364,7 @@ sap.ui.define([
                     type: "GET",
                     data: oParams,
                     dataType: "json",
+                    converters: JSON_CONVERTERS,
                     timeout: 30000,
                     headers: that._csrfHeaders()
                 });
@@ -1326,6 +1389,7 @@ sap.ui.define([
                     type: "POST",
                     data: oData,
                     dataType: "json",
+                    converters: JSON_CONVERTERS,
                     timeout: 30000,
                     headers: that._csrfHeaders()
                 });
