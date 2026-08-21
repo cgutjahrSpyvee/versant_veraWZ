@@ -67,7 +67,8 @@
                             text="{i18n>btnTestEmail}"
                             tooltip="{i18n>btnTestEmail}"
                             press=".onChangeTestEmail"
-                            type="Transparent"/>
+                            type="Transparent"
+                            visible="false" />
                         <Button
                             icon="sap-icon://refresh"
                             tooltip="{i18n>btnRefresh}"
