@@ -899,7 +899,7 @@ sap.ui.define([
         // views do not need the service just to reach BASE.
         _docUrl: function (oSlot, sRequestId) {
             if (!oSlot || !oSlot.id || !oSlot.name) { return ""; }
-            return this.getFileUrl(oSlot.name, "ZSVRA_REQ", sRequestId || "", oSlot.id);
+            return this.getFileUrl(oSlot.name, "Z_REQUEST", sRequestId || "", oSlot.id);
         },
 
         /**
@@ -1141,7 +1141,7 @@ sap.ui.define([
                     .reject(null, "error", "missing request id").promise();
             }
 
-            return this.uploadFile(oFile, oData.requestId, "ZSVRA_REQ", sFileType)
+            return this.uploadFile(oFile, oData.requestId, "Z_REQUEST", sFileType)
                 .then(function (oResult) {
                     if (!oResult || !oResult.id) {
                         Log.error("VeRAService: managecsdoc returned no document id for " +
@@ -1157,7 +1157,7 @@ sap.ui.define([
             var oFormData = new FormData();
             oFormData.append("action",   "upload");
             oFormData.append("id",       sObjectKey  || "");
-            oFormData.append("objtype",  sObjectType || "ZSVRA_REQ");
+            oFormData.append("objtype",  sObjectType || "Z_REQUEST");
             oFormData.append("fileType", sFileType   || "");
             // No "filename" field: managecsdoc takes the name off the file part
             // itself, and only when it hasn't already seen a filename form
